@@ -116,12 +116,11 @@ export const getCosmeticsEconomySummary = async (): Promise<CosmeticsEconomySumm
     await Promise.all(worlds.map((world) => collectPagedCosmetics((offset, limit) => getCosmeticsByWorld(world.id, offset, limit))))
   ).flat();
 
-  const allCosmetics = [...defaultCosmetics, ...userCreatedCosmetics];
-  if (allCosmetics.length === 0) {
-    return { defaultCosmetics: 0, userCreatedCosmetics: 0, averagePrice: 0 };
+  if (userCreatedCosmetics.length === 0) {
+    return { defaultCosmetics: defaultCosmetics.length, userCreatedCosmetics: 0, averagePrice: 0 };
   }
 
-  const pricedCosmetics = await Promise.all(allCosmetics.map((cosmetic) => getCosmeticByIdInternal(cosmetic.id)));
+  const pricedCosmetics = await Promise.all(userCreatedCosmetics.map((cosmetic) => getCosmeticByIdInternal(cosmetic.id)));
   const totalPrice = pricedCosmetics.reduce((sum, cosmetic) => sum + cosmetic.cosmetic_price, 0);
 
   return {

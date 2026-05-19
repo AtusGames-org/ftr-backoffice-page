@@ -51,7 +51,7 @@ function Metrics() {
                     />
                     <StatCard
                         title="Cosmetics"
-                        value={summary ? `${summary.totalCosmetics.toLocaleString()} items` : '--'}
+                        value={summary ? `${summary.userCreatedCosmetics.toLocaleString()} items` : '--'}
                         caption={summary ? `Avg price ${summary.avgCosmeticPrice} gems` : undefined}
                     />
                 </div>

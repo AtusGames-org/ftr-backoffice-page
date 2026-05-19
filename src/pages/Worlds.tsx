@@ -19,12 +19,11 @@ import {
     getZoneAddress,
     startZoneJob,
     stopZoneJob,
-    World,
-    WorldDetails,
-    WorldFilter,
 } from '../services/worldService';
 import { getCosmeticsByWorld } from '../services/assetsService';
 import { getAllWorldPlayerCounts, getWorldPlayerCounts } from '../services/worldPlayersService';
+import CosmeticsDialog from '../components/CosmeticsDialog';
+import type { World, WorldDetails, WorldFilter } from '../services/worldService';
 
 const statusOptions: { label: string; value: WorldFilter['status'] }[] = [
     { label: 'All', value: 'all' },
@@ -153,22 +152,21 @@ function Worlds() {
                             label="Search by name"
                             size="small"
                             value={filter.query}
-                                    onChange={(event) => {
-                                        setWorldPage(0);
-                                        setFilter({ ...filter, query: event.target.value });
-                                    }}
+                            onChange={(event) => {
+                                setWorldPage(0);
+                                setFilter({ ...filter, query: event.target.value });
+                            }}
                         />
                         <Select
                             size="small"
                             value={filter.status}
-                            onChange={(event) =>
-                                {
-                                    setWorldPage(0);
-                                    setFilter({
-                                        ...filter,
-                                        status: event.target.value as WorldFilter['status'],
-                                    });
-                                }
+                            onChange={(event) => {
+                                setWorldPage(0);
+                                setFilter({
+                                    ...filter,
+                                    status: event.target.value as WorldFilter['status'],
+                                });
+                            }
                             }
                         >
                             {statusOptions.map((option) => (
@@ -282,49 +280,17 @@ function Worlds() {
                 )}
             </aside>
 
-            <Dialog open={cosmeticsOpen} onClose={() => setCosmeticsOpen(false)} maxWidth="md" fullWidth>
-                <DialogTitle>Cosmetics List - {selectedWorld?.name ?? 'World'}</DialogTitle>
-                <DialogContent>
-                    <div className="grid grid-cols-4 gap-4">
-                        {cosmetics.map((item) => (
-                            <div key={item.id} className="rounded-lg border border-[#2a2640] p-3">
-                                <img src={item.url} alt="Cosmetic" className="h-24 w-full rounded object-cover" />
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    className="mt-2 w-full"
-                                    onClick={async () => {
-                                        await navigator.clipboard.writeText(item.url);
-                                    }}
-                                >
-                                    Copy URL
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                        <Button
-                            size="small"
-                            variant="outlined"
-                            disabled={cosmeticsPage === 0}
-                            onClick={() => handleOpenCosmetics(selectedWorld?.id ?? '', cosmeticsPage - 1)}
-                        >
-                            Previous
-                        </Button>
-                        <p className="text-xs text-[rgba(184,176,214,0.8)]">
-                            Page {cosmeticsPage + 1} of {Math.max(1, Math.ceil(cosmeticsTotal / cosmeticsPageSize))}
-                        </p>
-                        <Button
-                            size="small"
-                            variant="outlined"
-                            disabled={(cosmeticsPage + 1) * cosmeticsPageSize >= cosmeticsTotal}
-                            onClick={() => handleOpenCosmetics(selectedWorld?.id ?? '', cosmeticsPage + 1)}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <CosmeticsDialog
+                open={cosmeticsOpen}
+                title={`Cosmetics List - ${selectedWorld?.name ?? 'World'}`}
+                items={cosmetics}
+                page={cosmeticsPage}
+                total={cosmeticsTotal}
+                pageSize={cosmeticsPageSize}
+                onClose={() => setCosmeticsOpen(false)}
+                onPrevious={() => handleOpenCosmetics(selectedWorld?.id ?? '', cosmeticsPage - 1)}
+                onNext={() => handleOpenCosmetics(selectedWorld?.id ?? '', cosmeticsPage + 1)}
+            />
 
             <Dialog open={startJobDialog?.open ?? false} onClose={() => setStartJobDialog(null)}>
                 <DialogTitle>Start Zone Job</DialogTitle>

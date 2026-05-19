@@ -20,8 +20,9 @@ import {
     grantAdmin,
     updateUserGems,
 } from '../services/userService';
-import { getCosmeticsByCategory, getCosmeticsCategories } from '../services/assetsService';
+import { getCosmeticsByCategory, getCosmeticsCategories, normalizeCosmeticUrl } from '../services/assetsService';
 import type { User, UserDetails, UserFilter } from '../services/userService';
+import CosmeticsDialog from '../components/CosmeticsDialog';
 
 const verifiedOptions: { label: string; value: UserFilter['verified'] }[] = [
     { label: 'All', value: 'all' },
@@ -245,7 +246,7 @@ function Users() {
                                     {selectedUser.wearingSpriteUrls.map((spriteUrl) => (
                                         <img
                                             key={spriteUrl}
-                                            src={spriteUrl}
+                                            src={normalizeCosmeticUrl(spriteUrl)}
                                             alt="Cosmetic"
                                             className="h-12 w-12 rounded border border-[#2a2640] object-cover"
                                         />
@@ -298,40 +299,17 @@ function Users() {
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={cosmeticsOpen} onClose={() => setCosmeticsOpen(false)} maxWidth="md" fullWidth>
-                <DialogTitle>User Cosmetics - {selectedUser?.characterName ?? 'Player'}</DialogTitle>
-                <DialogContent>
-                    <div className="grid grid-cols-4 gap-4">
-                        {cosmetics.map((item) => (
-                            <div key={item.id} className="rounded-lg border border-[#2a2640] p-3">
-                                <img src={item.url} alt="Cosmetic" className="h-24 w-full rounded object-cover" />
-                                <p className="mt-2 break-all text-xs text-[rgba(184,176,214,0.8)]">{item.url}</p>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                        <Button
-                            size="small"
-                            variant="outlined"
-                            disabled={cosmeticsPage === 0}
-                            onClick={() => handleOpenUserCosmetics(selectedUser?.id ?? '', cosmeticsPage - 1)}
-                        >
-                            Previous
-                        </Button>
-                        <p className="text-xs text-[rgba(184,176,214,0.8)]">
-                            Page {cosmeticsPage + 1} of {Math.max(1, Math.ceil(cosmeticsTotal / cosmeticsPageSize))}
-                        </p>
-                        <Button
-                            size="small"
-                            variant="outlined"
-                            disabled={(cosmeticsPage + 1) * cosmeticsPageSize >= cosmeticsTotal}
-                            onClick={() => handleOpenUserCosmetics(selectedUser?.id ?? '', cosmeticsPage + 1)}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <CosmeticsDialog
+                open={cosmeticsOpen}
+                title={`User Cosmetics - ${selectedUser?.characterName ?? 'Player'}`}
+                items={cosmetics}
+                page={cosmeticsPage}
+                total={cosmeticsTotal}
+                pageSize={cosmeticsPageSize}
+                onClose={() => setCosmeticsOpen(false)}
+                onPrevious={() => handleOpenUserCosmetics(selectedUser?.id ?? '', cosmeticsPage - 1)}
+                onNext={() => handleOpenUserCosmetics(selectedUser?.id ?? '', cosmeticsPage + 1)}
+            />
         </div>
     );
 }
