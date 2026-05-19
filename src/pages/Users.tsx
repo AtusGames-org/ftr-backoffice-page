@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   MenuItem,
   Select,
   Table,
@@ -17,6 +21,7 @@ import {
   User,
   UserDetails,
   UserFilter,
+  updateUserGems,
 } from '../services/userService';
 
 const verifiedOptions: { label: string; value: UserFilter['verified'] }[] = [
@@ -29,6 +34,9 @@ function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [filter, setFilter] = useState<UserFilter>({ query: '', verified: 'all' });
   const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null);
+  const [gemDialogOpen, setGemDialogOpen] = useState(false);
+  const [gemTarget, setGemTarget] = useState<User | null>(null);
+  const [gemInput, setGemInput] = useState('');
 
   const loadUsers = async (nextFilter: UserFilter) => {
     const data = await getUsers(nextFilter);
@@ -51,6 +59,29 @@ function Users() {
       const details = await getUserDetails(userId);
       setSelectedUser(details);
     }
+  };
+
+  const handleOpenGemsDialog = (user: User) => {
+    setGemTarget(user);
+    setGemInput(user.totalGems.toString());
+    setGemDialogOpen(true);
+  };
+
+  const handleSaveGems = async () => {
+    if (!gemTarget) {
+      return;
+    }
+    const nextValue = Number.parseInt(gemInput, 10);
+    if (Number.isNaN(nextValue) || nextValue < 0) {
+      return;
+    }
+    await updateUserGems(gemTarget.id, nextValue);
+    await loadUsers(filter);
+    if (selectedUser?.id === gemTarget.id) {
+      const details = await getUserDetails(gemTarget.id);
+      setSelectedUser(details);
+    }
+    setGemDialogOpen(false);
   };
 
   const userCountLabel = useMemo(() => `${users.length} users`, [users.length]);
@@ -114,6 +145,13 @@ function Users() {
                       <Button
                         size="small"
                         variant="outlined"
+                        onClick={() => handleOpenGemsDialog(user)}
+                      >
+                        Update Gems
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
                         color="secondary"
                         disabled={user.role === 'admin'}
                         onClick={() => handleGrantAdmin(user.id)}
@@ -153,6 +191,30 @@ function Users() {
           </div>
         )}
       </aside>
+
+      <Dialog open={gemDialogOpen} onClose={() => setGemDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Update Gems Balance</DialogTitle>
+        <DialogContent className="space-y-4">
+          <p className="text-sm text-[rgba(184,176,214,0.8)]">
+            Set the new total gems balance for {gemTarget?.email ?? 'user'}.
+          </p>
+          <TextField
+            label="Total Gems"
+            type="number"
+            value={gemInput}
+            onChange={(event) => setGemInput(event.target.value)}
+            inputProps={{ min: 0 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button variant="text" onClick={() => setGemDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="contained" color="primary" onClick={handleSaveGems}>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

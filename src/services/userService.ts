@@ -35,7 +35,7 @@ let users: User[] = [
   { id: 'u-108', email: 'crystal@realm.io', verified: true, role: 'player', totalGems: 2110 },
 ];
 
-const userDetails: UserDetails[] = [
+let userDetails: UserDetails[] = [
   {
     id: 'u-101',
     characterName: 'Aris the Emberborn',
@@ -136,6 +136,31 @@ export const grantAdmin = async (userId: string): Promise<User> => {
           role: 'admin',
         }
       : user,
+  );
+  const updated = users.find((user) => user.id === userId);
+  if (!updated) {
+    throw new Error('User not found');
+  }
+  return updated;
+};
+
+export const updateUserGems = async (userId: string, totalGems: number): Promise<User> => {
+  await delay(300);
+  users = users.map((user) =>
+    user.id === userId
+      ? {
+          ...user,
+          totalGems,
+        }
+      : user,
+  );
+  userDetails = userDetails.map((detail) =>
+    detail.id === userId
+      ? {
+          ...detail,
+          totalGems,
+        }
+      : detail,
   );
   const updated = users.find((user) => user.id === userId);
   if (!updated) {
