@@ -1,28 +1,23 @@
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Home from './pages/Home';
-import About from './pages/About';
-import Features from './pages/Features';
-import Blog from './pages/Blog';
-import BlogPost from './pages/BlogPost';
-import Media from './pages/Media';
+import AppLayout from './components/AppLayout';
+import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import Users from './pages/Users';
+import Worlds from './pages/Worlds';
+import Metrics from './pages/Metrics';
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-900 text-white">
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/features" element={<Features />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:date" element={<BlogPost />} />
-          <Route path="/media" element={<Media />} />
-        </Routes>
-        <Footer />
-      </div>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/worlds" element={<Worlds />} />
+          <Route path="/metrics" element={<Metrics />} />
+        </Route>
+      </Routes>
     </Router>
   );
 }

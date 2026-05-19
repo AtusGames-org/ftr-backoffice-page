@@ -10,7 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@icons-pack/react-simple-icons": "^13.8.0",
+    "@mui/material": "^9.0.1",
     "@tailwindcss/postcss": "^4.1.18",
     "js-yaml": "^4.1.1",
     "react": "^19.2.0",
