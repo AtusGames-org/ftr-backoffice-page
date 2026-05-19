@@ -11,6 +11,11 @@ export interface CosmeticListResponse {
   total_count: number;
 }
 
+export interface CosmeticResponse {
+  cosmetic_id: string;
+  cosmetic_url: string;
+}
+
 export interface InternalCosmeticResponse {
   cosmetic_id: string;
   cosmetic_price: number;
@@ -38,6 +43,14 @@ export const getCosmeticsCategories = async (): Promise<CosmeticCategory[]> => {
 
 export const getCosmeticByIdInternal = async (cosmeticId: string): Promise<InternalCosmeticResponse> =>
   apiRequest<InternalCosmeticResponse>(`/assets/internal/cosmetics/${cosmeticId}`);
+
+export const getCosmeticById = async (cosmeticId: string): Promise<{ id: string; url: string }> => {
+  const response = await apiRequest<CosmeticResponse>(`/assets/cosmetics/${cosmeticId}`);
+  return {
+    id: response.cosmetic_id ?? cosmeticId,
+    url: normalizeCosmeticUrl(response.cosmetic_url ?? ''),
+  };
+};
 
 export const getCosmeticsByCategory = async (
   categoryId: string,

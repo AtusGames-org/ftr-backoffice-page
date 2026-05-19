@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import { getCosmeticsByCategory, getCosmeticsCategories, normalizeCosmeticUrl } from './assetsService';
+import { getCosmeticById, getCosmeticsByCategory, getCosmeticsCategories } from './assetsService';
 import { getCharacterInfo } from './playersService';
 import { getAllCreatorBalances, getAllGemBalances, updateGemBalance } from './paymentService';
 
@@ -113,9 +113,15 @@ export const getUserDetails = async (userId: string): Promise<UserDetails> => {
     );
 
     const ownedSprites = ownedCounts.reduce((sum, entry) => sum + entry.total, 0);
-    const wearingSpriteUrls = Object.values(characterInfo.category_sprites ?? {})
-        .filter(Boolean)
-        .map((uri) => normalizeCosmeticUrl(uri));
+    const wearingSpriteUrls = (
+        await Promise.all(
+            Object.values(characterInfo.category_sprites ?? {})
+                .filter(Boolean)
+                .map((spriteId) => getCosmeticById(spriteId).catch(() => null)),
+        )
+    )
+        .filter((item): item is { id: string; url: string } => item !== null)
+        .map((item) => item.url);
 
     return {
         id: userId,
