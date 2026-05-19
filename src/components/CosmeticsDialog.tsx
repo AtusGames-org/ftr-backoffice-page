@@ -15,6 +15,7 @@ interface CosmeticsDialogProps {
     onClose: () => void;
     onPrevious: () => void;
     onNext: () => void;
+    onItemClick?: (item: CosmeticDialogItem) => void;
     emptyMessage?: string;
 }
 
@@ -28,6 +29,7 @@ function CosmeticsDialog({
     onClose,
     onPrevious,
     onNext,
+    onItemClick,
     emptyMessage = 'No cosmetics found.',
 }: CosmeticsDialogProps) {
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -42,17 +44,14 @@ function CosmeticsDialog({
                     <div className="grid grid-cols-4 gap-4">
                         {items.map((item) => (
                             <div key={item.id} className="rounded-lg border border-[#2a2640] p-3">
-                                <img src={item.url} alt="Cosmetic" className="h-24 w-full rounded object-cover" />
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    className="mt-2 w-full"
-                                    onClick={async () => {
-                                        await navigator.clipboard.writeText(item.url);
-                                    }}
+                                <button
+                                    type="button"
+                                    className="block w-full text-left"
+                                    onClick={() => onItemClick?.(item)}
                                 >
-                                    Copy URL
-                                </Button>
+                                    <img src={item.url} alt="Cosmetic" className="cursor-pointer h-24 w-full rounded object-cover" />
+                                    <p className="mt-2 text-xs text-[rgba(184,176,214,0.8)]">Click to preview</p>
+                                </button>
                             </div>
                         ))}
                     </div>

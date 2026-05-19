@@ -23,6 +23,8 @@ import {
 import { getCosmeticsByWorld } from '../services/assetsService';
 import { getAllWorldPlayerCounts, getWorldPlayerCounts } from '../services/worldPlayersService';
 import CosmeticsDialog from '../components/CosmeticsDialog';
+import CosmeticPreviewDialog from '../components/CosmeticPreviewDialog';
+import type { CosmeticPreviewItem } from '../components/CosmeticPreviewDialog';
 import type { World, WorldDetails, WorldFilter } from '../services/worldService';
 
 const statusOptions: { label: string; value: WorldFilter['status'] }[] = [
@@ -41,6 +43,8 @@ function Worlds() {
     const [cosmetics, setCosmetics] = useState<{ id: string; url: string }[]>([]);
     const [cosmeticsTotal, setCosmeticsTotal] = useState(0);
     const [cosmeticsPage, setCosmeticsPage] = useState(0);
+    const [previewItem, setPreviewItem] = useState<CosmeticPreviewItem | null>(null);
+    const [previewOpen, setPreviewOpen] = useState(false);
     const cosmeticsPageSize = 12;
     const [startJobDialog, setStartJobDialog] = useState<{ open: boolean; worldId: string; zoneId: number } | null>(null);
     const [isTestMode, setIsTestMode] = useState(false);
@@ -290,6 +294,17 @@ function Worlds() {
                 onClose={() => setCosmeticsOpen(false)}
                 onPrevious={() => handleOpenCosmetics(selectedWorld?.id ?? '', cosmeticsPage - 1)}
                 onNext={() => handleOpenCosmetics(selectedWorld?.id ?? '', cosmeticsPage + 1)}
+                onItemClick={(item) => {
+                    setPreviewItem(item);
+                    setPreviewOpen(true);
+                }}
+            />
+
+            <CosmeticPreviewDialog
+                open={previewOpen}
+                item={previewItem}
+                title={selectedWorld ? `${selectedWorld.name} Cosmetic` : 'Cosmetic Preview'}
+                onClose={() => setPreviewOpen(false)}
             />
 
             <Dialog open={startJobDialog?.open ?? false} onClose={() => setStartJobDialog(null)}>

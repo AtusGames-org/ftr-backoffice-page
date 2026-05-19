@@ -23,6 +23,8 @@ import {
 import { getCosmeticsByCategory, getCosmeticsCategories, normalizeCosmeticUrl } from '../services/assetsService';
 import type { User, UserDetails, UserFilter } from '../services/userService';
 import CosmeticsDialog from '../components/CosmeticsDialog';
+import CosmeticPreviewDialog from '../components/CosmeticPreviewDialog';
+import type { CosmeticPreviewItem } from '../components/CosmeticPreviewDialog';
 
 const verifiedOptions: { label: string; value: UserFilter['verified'] }[] = [
     { label: 'All', value: 'all' },
@@ -43,6 +45,8 @@ function Users() {
     const [cosmetics, setCosmetics] = useState<{ id: string; url: string }[]>([]);
     const [cosmeticsTotal, setCosmeticsTotal] = useState(0);
     const [cosmeticsPage, setCosmeticsPage] = useState(0);
+    const [previewItem, setPreviewItem] = useState<CosmeticPreviewItem | null>(null);
+    const [previewOpen, setPreviewOpen] = useState(false);
     const cosmeticsPageSize = 12;
     const usersPageSize = 20;
 
@@ -244,12 +248,22 @@ function Users() {
                             {selectedUser.wearingSpriteUrls.length > 0 && (
                                 <div className="mt-3 grid grid-cols-4 gap-2">
                                     {selectedUser.wearingSpriteUrls.map((spriteUrl) => (
-                                        <img
+                                        <button
                                             key={spriteUrl}
-                                            src={normalizeCosmeticUrl(spriteUrl)}
-                                            alt="Cosmetic"
-                                            className="h-12 w-12 rounded border border-[#2a2640] object-cover"
-                                        />
+                                            type="button"
+                                            className="rounded border border-[#2a2640]"
+                                            onClick={() => {
+                                                const url = normalizeCosmeticUrl(spriteUrl);
+                                                setPreviewItem({ id: spriteUrl, url });
+                                                setPreviewOpen(true);
+                                            }}
+                                        >
+                                            <img
+                                                src={normalizeCosmeticUrl(spriteUrl)}
+                                                alt="Cosmetic"
+                                                className="cursor-pointer h-12 w-12 rounded object-cover"
+                                            />
+                                        </button>
                                     ))}
                                 </div>
                             )}
@@ -309,6 +323,17 @@ function Users() {
                 onClose={() => setCosmeticsOpen(false)}
                 onPrevious={() => handleOpenUserCosmetics(selectedUser?.id ?? '', cosmeticsPage - 1)}
                 onNext={() => handleOpenUserCosmetics(selectedUser?.id ?? '', cosmeticsPage + 1)}
+                onItemClick={(item) => {
+                    setPreviewItem(item);
+                    setPreviewOpen(true);
+                }}
+            />
+
+            <CosmeticPreviewDialog
+                open={previewOpen}
+                item={previewItem}
+                title={selectedUser ? `${selectedUser.characterName} Cosmetic` : 'Cosmetic Preview'}
+                onClose={() => setPreviewOpen(false)}
             />
         </div>
     );
