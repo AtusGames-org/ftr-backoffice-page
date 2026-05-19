@@ -23,7 +23,7 @@ function Metrics() {
                     <StatCard title="Active Players" value={summary ? summary.activePlayers.toLocaleString() : '--'} />
                     <StatCard
                         title="Avg Player Time"
-                        value={summary ? (summary.avgPlayerTime !== null ? `${summary.avgPlayerTime} hrs` : '--') : '--'}
+                        value={summary ? (summary.avgPlayerTime !== null ? `${summary.avgPlayerTime} min` : '--') : '--'}
                     />
                 </div>
             </section>

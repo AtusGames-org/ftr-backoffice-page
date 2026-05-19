@@ -40,6 +40,9 @@ export const getMetricsSummary = async (): Promise<MetricsSummary> => {
     const onlineZones = worlds.reduce((sum, world) => sum + world.onlineZoneCount, 0);
     const avgZonesPerWorld = worlds.length > 0 ? Number((totalZones / worlds.length).toFixed(1)) : 0;
     const activePlayers = playerCounts.reduce((sum, world) => sum + world.total_players, 0);
+    const avgPlayerTime = playerCounts.length > 0
+        ? Math.round(playerCounts.reduce((sum, world) => sum + world.average_player_time, 0) / playerCounts.length)
+        : null;
     const totalCreatorBalance = creatorBalances.reduce((sum, balance) => sum + balance.balance, 0);
     const totalGemsInCirculation = gemBalances.reduce((sum, balance) => sum + balance.gems, 0);
 
@@ -51,7 +54,7 @@ export const getMetricsSummary = async (): Promise<MetricsSummary> => {
         totalZones,
         onlineZones,
         avgZonesPerWorld,
-        avgPlayerTime: null,
+        avgPlayerTime,
         gemsBought: null,
         gemsSpent: null,
         totalCosmetics: cosmeticsSummary.defaultCosmetics + cosmeticsSummary.userCreatedCosmetics,

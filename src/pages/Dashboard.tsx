@@ -43,8 +43,8 @@ function Dashboard() {
                     <StatCard title="Active Players" value={summary ? summary.activePlayers.toLocaleString() : '--'} caption="Currently in world" />
                     <StatCard
                         title="Avg Player Time"
-                        value={summary?.avgPlayerTime ? `${summary.avgPlayerTime} hrs` : '--'}
-                        caption="Per weekly session"
+                        value={summary ? (summary.avgPlayerTime !== null ? `${summary.avgPlayerTime} min` : '--') : '--'}
+                        caption="Across all worlds"
                     />
                 </div>
             </section>
