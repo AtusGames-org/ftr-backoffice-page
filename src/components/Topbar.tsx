@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@mui/material';
 import { logout } from '../services/authService';
+import { getMetricsSummary } from '../services/metricsService';
 
 const titles: Record<string, string> = {
     '/': 'Dashboard',
@@ -20,6 +22,35 @@ function Topbar() {
     const location = useLocation();
     const navigate = useNavigate();
     const title = titles[location.pathname] ?? 'Dashboard';
+    const [lastSyncLabel, setLastSyncLabel] = useState('Syncing...');
+
+    useEffect(() => {
+        let mounted = true;
+
+        const loadSummary = async () => {
+            const summary = await getMetricsSummary().catch(() => null);
+            if (!mounted || !summary) {
+                return;
+            }
+            const seconds = Math.max(0, Math.floor((Date.now() - summary.lastSyncTime.getTime()) / 1000));
+            if (seconds < 60) {
+                setLastSyncLabel('just now');
+                return;
+            }
+            if (seconds < 3600) {
+                setLastSyncLabel(`${Math.floor(seconds / 60)} min ago`);
+                return;
+            }
+            setLastSyncLabel(`${Math.floor(seconds / 3600)} hr ago`);
+        };
+
+        loadSummary();
+        const interval = setInterval(loadSummary, 5 * 60 * 1000);
+        return () => {
+            mounted = false;
+            clearInterval(interval);
+        };
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -36,7 +67,7 @@ function Topbar() {
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="hidden rounded-full border border-[rgba(139,92,246,0.5)] bg-[rgba(12,10,20,0.6)] px-3 py-1 text-xs text-[#c9c1ea] md:block">
-                            Last sync: 2 min ago
+                            Last sync: {lastSyncLabel}
                         </div>
                         <Button
                             variant="outlined"

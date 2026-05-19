@@ -2,7 +2,7 @@ import { getAllCreatorBalances, getAllGemBalances } from './paymentService';
 import { getUsers } from './userService';
 import { getAllWorldPlayerCounts } from './worldPlayersService';
 import { getWorlds } from './worldService';
-import { getCosmeticsCount } from './assetsService';
+import { getCosmeticsEconomySummary } from './assetsService';
 
 export interface MetricsSummary {
     totalPlayers: number;
@@ -17,19 +17,21 @@ export interface MetricsSummary {
     gemsSpent: number | null;
     totalCosmetics: number | null;
     avgCosmeticPrice: number | null;
+    defaultCosmetics: number;
+    userCreatedCosmetics: number;
     totalCreatorBalance: number;
     totalGemsInCirculation: number;
     lastSyncTime: Date;
 }
 
 export const getMetricsSummary = async (): Promise<MetricsSummary> => {
-    const [users, worlds, playerCounts, gemBalances, creatorBalances, totalCosmeticsCount] = await Promise.all([
+    const [users, worlds, playerCounts, gemBalances, creatorBalances, cosmeticsSummary] = await Promise.all([
         getUsers({ query: '', verified: 'all' }),
         getWorlds({ query: '', status: 'all' }),
         getAllWorldPlayerCounts().catch(() => []),
         getAllGemBalances().catch(() => []),
         getAllCreatorBalances().catch(() => []),
-        getCosmeticsCount().catch(() => 0),
+        getCosmeticsEconomySummary().catch(() => ({ defaultCosmetics: 0, userCreatedCosmetics: 0, averagePrice: 0 })),
     ]);
 
     const totalPlayers = users.length;
@@ -52,8 +54,10 @@ export const getMetricsSummary = async (): Promise<MetricsSummary> => {
         avgPlayerTime: null,
         gemsBought: null,
         gemsSpent: null,
-        totalCosmetics: totalCosmeticsCount || null,
-        avgCosmeticPrice: null,
+        totalCosmetics: cosmeticsSummary.defaultCosmetics + cosmeticsSummary.userCreatedCosmetics,
+        avgCosmeticPrice: cosmeticsSummary.averagePrice,
+        defaultCosmetics: cosmeticsSummary.defaultCosmetics,
+        userCreatedCosmetics: cosmeticsSummary.userCreatedCosmetics,
         totalCreatorBalance,
         totalGemsInCirculation,
         lastSyncTime: new Date(),

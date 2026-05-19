@@ -23,7 +23,7 @@ function Metrics() {
                     <StatCard title="Active Players" value={summary ? summary.activePlayers.toLocaleString() : '--'} />
                     <StatCard
                         title="Avg Player Time"
-                        value={summary?.avgPlayerTime ? `${summary.avgPlayerTime} hrs` : '--'}
+                        value={summary ? (summary.avgPlayerTime !== null ? `${summary.avgPlayerTime} hrs` : '--') : '--'}
                     />
                 </div>
             </section>
@@ -43,16 +43,16 @@ function Metrics() {
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                     <StatCard
                         title="Gems Bought"
-                        value={summary?.gemsBought ? summary.gemsBought.toLocaleString() : '--'}
+                        value={summary ? (summary.gemsBought !== null ? summary.gemsBought.toLocaleString() : '--') : '--'}
                     />
                     <StatCard
                         title="Gems Spent"
-                        value={summary?.gemsSpent ? summary.gemsSpent.toLocaleString() : '--'}
+                        value={summary ? (summary.gemsSpent !== null ? summary.gemsSpent.toLocaleString() : '--') : '--'}
                     />
                     <StatCard
                         title="Cosmetics"
-                        value={summary?.totalCosmetics ? `${summary.totalCosmetics.toLocaleString()} items` : '--'}
-                        caption={summary?.avgCosmeticPrice ? `Avg price ${summary.avgCosmeticPrice} gems` : undefined}
+                        value={summary ? `${summary.totalCosmetics.toLocaleString()} items` : '--'}
+                        caption={summary ? `Avg price ${summary.avgCosmeticPrice} gems` : undefined}
                     />
                 </div>
             </section>

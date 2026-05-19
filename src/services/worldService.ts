@@ -16,6 +16,11 @@ export interface WorldFilter {
     status: 'all' | WorldStatus;
 }
 
+export interface WorldPagination {
+    offset?: number;
+    limit?: number;
+}
+
 export interface Zone {
     id: number;
     name: string;
@@ -45,26 +50,53 @@ interface WorldsListResponse {
     offset: number;
 }
 
-export const getWorlds = async (filter: WorldFilter): Promise<World[]> => {
+const fetchWorldsPage = async (filter: WorldFilter, pagination: Required<WorldPagination>): Promise<{ items: World[]; total: number }> => {
     const params = new URLSearchParams();
-    params.set('offset', '0');
-    params.set('limit', '100');
+    params.set('offset', String(pagination.offset));
+    params.set('limit', String(pagination.limit));
     if (filter.query) {
         params.set('filter', filter.query);
     }
     const response = await apiRequest<WorldsListResponse>(`/world?${params}`);
-    const mapped = response.worlds.map((world) => ({
-        id: world.id,
-        name: world.name,
-        status: deriveStatus(world.zones),
-        activePlayers: 0,
-        zoneCount: world.zones.length,
-        onlineZoneCount: world.zones.filter((zone) => zone.is_online).length,
-    }));
-    return filter.status === 'all'
-        ? mapped
-        : mapped.filter((world) => world.status === filter.status);
+    return {
+        items: response.worlds.map((world) => ({
+            id: world.id,
+            name: world.name,
+            status: deriveStatus(world.zones),
+            activePlayers: 0,
+            zoneCount: world.zones.length,
+            onlineZoneCount: world.zones.filter((zone) => zone.is_online).length,
+        })),
+        total: response.amount,
+    };
 };
+
+export const getWorldsPage = async (filter: WorldFilter, pagination: WorldPagination = {}): Promise<{ items: World[]; total: number }> =>
+    fetchWorldsPage(filter, {
+        offset: pagination.offset ?? 0,
+        limit: pagination.limit ?? 20,
+    });
+
+export const getAllWorlds = async (filter: WorldFilter): Promise<World[]> => {
+    const pageSize = 100;
+    const items: World[] = [];
+    let offset = 0;
+    let total = Number.POSITIVE_INFINITY;
+
+    while (offset < total) {
+        const page = await fetchWorldsPage(filter, { offset, limit: pageSize });
+        items.push(...page.items);
+        total = page.total;
+        if (page.items.length === 0) {
+            break;
+        }
+        offset += page.items.length;
+    }
+
+    return filter.status === 'all' ? items : items.filter((world) => world.status === filter.status);
+};
+
+export const getWorlds = async (filter: WorldFilter): Promise<World[]> => getAllWorlds(filter);
 
 export const getWorldZones = async (worldId: string): Promise<Zone[]> => {
     const response = await apiRequest<{ world_id: string; zones: { zone_id: number; is_active: boolean; is_online: boolean }[] }>(

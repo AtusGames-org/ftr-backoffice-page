@@ -5,6 +5,12 @@ interface ApiEnvelope<T> {
   data: T;
 }
 
+interface ProblemDetails {
+  detail?: string;
+  title?: string;
+  message?: string;
+}
+
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 interface ApiRequestOptions {
@@ -85,7 +91,14 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(errorText || response.statusText);
+    let message = errorText || response.statusText;
+    try {
+      const parsed = JSON.parse(errorText) as ProblemDetails;
+      message = parsed.detail ?? parsed.message ?? parsed.title ?? message;
+    } catch {
+      // Fall back to the raw payload or the HTTP status text.
+    }
+    throw new Error(message);
   }
 
   return parseResponse<T>(response);

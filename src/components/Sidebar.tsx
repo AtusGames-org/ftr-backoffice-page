@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { GiCastle, GiCrown, GiDragonHead, GiRank3 } from 'react-icons/gi';
 import logo from '../assets/ftr_logo.jpeg';
+import { getMetricsSummary } from '../services/metricsService';
 
 const navItems = [
     { to: '/', label: 'Dashboard', icon: GiDragonHead },
@@ -10,6 +12,38 @@ const navItems = [
 ];
 
 function Sidebar() {
+    const [realmStatusLabel, setRealmStatusLabel] = useState('Loading status...');
+
+    useEffect(() => {
+        let mounted = true;
+
+        const loadStatus = async () => {
+            const summary = await getMetricsSummary().catch(() => null);
+            if (!mounted || !summary) {
+                return;
+            }
+
+            const playersLabel = new Intl.NumberFormat('en', {
+                notation: 'compact',
+                maximumFractionDigits: 1,
+            }).format(summary.activePlayers);
+            const status = summary.worldsOnline === 0
+                ? 'Offline'
+                : summary.worldsOnline === summary.totalWorlds
+                    ? 'Stable'
+                    : 'Degraded';
+
+            setRealmStatusLabel(`${status}. ${playersLabel} concurrent players.`);
+        };
+
+        loadStatus();
+        const interval = setInterval(loadStatus, 5 * 60 * 1000);
+        return () => {
+            mounted = false;
+            clearInterval(interval);
+        };
+    }, []);
+
     return (
         <aside className="app-sidebar hidden w-64 flex-col border-r border-[#2a2640] px-5 pb-8 pt-6 md:flex">
             <div className="flex items-center gap-3">
@@ -42,7 +76,7 @@ function Sidebar() {
             </nav>
             <div className="mt-8 rounded-xl border border-[rgba(139,92,246,0.4)] bg-[rgba(12,10,20,0.7)] p-4 text-xs text-[#c9c1ea]">
                 <p className="font-semibold text-[#f8f5ff]">Realm status</p>
-                <p className="mt-1">Stable. 1.4k concurrent players.</p>
+                <p className="mt-1">{realmStatusLabel}</p>
             </div>
         </aside>
     );

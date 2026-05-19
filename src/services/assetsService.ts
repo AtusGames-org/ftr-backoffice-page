@@ -11,7 +11,19 @@ export interface CosmeticListResponse {
   total_count: number;
 }
 
-const normalizeCosmeticUrl = (uri: string) => {
+export interface InternalCosmeticResponse {
+  cosmetic_id: string;
+  cosmetic_price: number;
+  created_by: string;
+}
+
+export interface CosmeticsEconomySummary {
+  defaultCosmetics: number;
+  userCreatedCosmetics: number;
+  averagePrice: number;
+}
+
+export const normalizeCosmeticUrl = (uri: string) => {
   if (!uri) {
     return '';
   }
@@ -23,6 +35,9 @@ export const getCosmeticsCategories = async (): Promise<CosmeticCategory[]> => {
   const response = await apiRequest<{ category_list: CosmeticCategory[] }>('/assets/cosmetics/categories');
   return response.category_list ?? [];
 };
+
+export const getCosmeticByIdInternal = async (cosmeticId: string): Promise<InternalCosmeticResponse> =>
+  apiRequest<InternalCosmeticResponse>(`/assets/internal/cosmetics/${cosmeticId}`);
 
 export const getCosmeticsByCategory = async (
   categoryId: string,
@@ -64,17 +79,54 @@ export const getCosmeticsByWorld = async (
   };
 };
 
-export const getCosmeticsCount = async (): Promise<number> => {
-  const categories = await getCosmeticsCategories();
-  let total = 0;
-  for (const cat of categories) {
-    const result = await getCosmeticsByCategory(cat.category_id, { offset: 0, limit: 1 });
-    total += result.total;
+const collectPagedCosmetics = async (
+  fetchPage: (offset: number, limit: number) => Promise<{ items: { id: string; url: string }[]; total: number }>,
+) => {
+  const pageSize = 200;
+  const collected: { id: string; url: string }[] = [];
+  let offset = 0;
+  let total = Number.POSITIVE_INFINITY;
+
+  while (offset < total) {
+    const page = await fetchPage(offset, pageSize);
+    collected.push(...page.items);
+    total = page.total;
+    if (page.items.length === 0) {
+      break;
+    }
+    offset += page.items.length;
   }
-  return total;
+
+  return collected;
 };
 
-export const getAverageCosmeticPrice = async (): Promise<number> => {
-  // If backend has a dedicated endpoint, use it; otherwise aggregate
-  return 0; // Placeholder - backend should provide this
+export const getCosmeticsEconomySummary = async (): Promise<CosmeticsEconomySummary> => {
+  const categories = await getCosmeticsCategories();
+  const defaultCosmetics = (
+    await Promise.all(
+      categories.map((category) =>
+        collectPagedCosmetics((offset, limit) => getCosmeticsByCategory(category.category_id, { offset, limit })),
+      ),
+    )
+  ).flat();
+
+  const { getAllWorlds } = await import('./worldService');
+  const worlds = await getAllWorlds({ query: '', status: 'all' });
+  const userCreatedCosmetics = (
+    await Promise.all(worlds.map((world) => collectPagedCosmetics((offset, limit) => getCosmeticsByWorld(world.id, offset, limit))))
+  ).flat();
+
+  const allCosmetics = [...defaultCosmetics, ...userCreatedCosmetics];
+  if (allCosmetics.length === 0) {
+    return { defaultCosmetics: 0, userCreatedCosmetics: 0, averagePrice: 0 };
+  }
+
+  const pricedCosmetics = await Promise.all(allCosmetics.map((cosmetic) => getCosmeticByIdInternal(cosmetic.id)));
+  const totalPrice = pricedCosmetics.reduce((sum, cosmetic) => sum + cosmetic.cosmetic_price, 0);
+
+  return {
+    defaultCosmetics: defaultCosmetics.length,
+    userCreatedCosmetics: userCreatedCosmetics.length,
+    averagePrice: Number((totalPrice / pricedCosmetics.length).toFixed(2)),
+  };
 };

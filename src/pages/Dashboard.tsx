@@ -73,15 +73,20 @@ function Dashboard() {
 
             <section className="app-card p-6">
                 <h3 className="app-title text-xl">Cosmetics Economy</h3>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="mt-4 grid gap-4 md:grid-cols-3">
                     <StatCard
-                        title="Total Cosmetics"
-                        value={summary?.totalCosmetics ? summary.totalCosmetics.toLocaleString() : '--'}
-                        caption="Across all realms"
+                        title="Default Cosmetics"
+                        value={summary ? summary.defaultCosmetics.toLocaleString() : '--'}
+                        caption="World-independent cosmetics"
+                    />
+                    <StatCard
+                        title="User Cosmetics"
+                        value={summary ? summary.userCreatedCosmetics.toLocaleString() : '--'}
+                        caption="Created for specific worlds"
                     />
                     <StatCard
                         title="Average Price"
-                        value={summary?.avgCosmeticPrice ? `${summary.avgCosmeticPrice} gems` : '--'}
+                        value={summary ? `${summary.avgCosmeticPrice} gems` : '--'}
                         caption="Weighted market rate"
                     />
                 </div>

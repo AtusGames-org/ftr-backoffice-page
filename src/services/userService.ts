@@ -1,6 +1,5 @@
 import { apiRequest } from './apiClient';
-import { getCosmeticsByCategory, getCosmeticsCategories } from './assetsService';
-import { cosmeticsCdnBaseUrl } from './config';
+import { getCosmeticsByCategory, getCosmeticsCategories, normalizeCosmeticUrl } from './assetsService';
 import { getCharacterInfo } from './playersService';
 import { getAllCreatorBalances, getAllGemBalances, updateGemBalance } from './paymentService';
 
@@ -35,10 +34,15 @@ interface UserListResponse {
     total_count: number;
 }
 
-export const getUsers = async (filter: UserFilter): Promise<User[]> => {
+interface PagedUsersResult {
+    items: User[];
+    total: number;
+}
+
+const fetchUsersPage = async (filter: UserFilter, offset: number, limit: number): Promise<PagedUsersResult> => {
     const params = new URLSearchParams();
-    params.set('offset', '0');
-    params.set('limit', '200');
+    params.set('offset', String(offset));
+    params.set('limit', String(limit));
     if (filter.query) {
         params.set('query', filter.query);
     }
@@ -53,13 +57,42 @@ export const getUsers = async (filter: UserFilter): Promise<User[]> => {
 
     const gemsByUser = new Map(gemBalances.map((balance) => [balance.user_id, balance.gems]));
 
-    return usersResponse.users.map((user) => ({
-        id: user.id,
-        email: user.email,
-        verified: user.verified,
-        role: user.is_admin ? 'admin' : 'player',
-        totalGems: gemsByUser.get(user.id) ?? 0,
-    }));
+    return {
+        items: usersResponse.users.map((user) => ({
+            id: user.id,
+            email: user.email,
+            verified: user.verified,
+            role: user.is_admin ? 'admin' : 'player',
+            totalGems: gemsByUser.get(user.id) ?? 0,
+        })),
+        total: usersResponse.total_count,
+    };
+};
+
+export const getUsersPage = async (filter: UserFilter, offset = 0, limit = 20): Promise<PagedUsersResult> =>
+    fetchUsersPage(filter, offset, limit);
+
+export const getAllUsers = async (filter: UserFilter): Promise<User[]> => {
+    const pageSize = 200;
+    const users: User[] = [];
+    let offset = 0;
+    let total = Number.POSITIVE_INFINITY;
+
+    while (offset < total) {
+        const page = await fetchUsersPage(filter, offset, pageSize);
+        users.push(...page.items);
+        total = page.total;
+        if (page.items.length === 0) {
+            break;
+        }
+        offset += page.items.length;
+    }
+
+    return users;
+};
+
+export const getUsers = async (filter: UserFilter): Promise<User[]> => {
+    return getAllUsers(filter);
 };
 
 export const getUserDetails = async (userId: string): Promise<UserDetails> => {
@@ -80,10 +113,9 @@ export const getUserDetails = async (userId: string): Promise<UserDetails> => {
     );
 
     const ownedSprites = ownedCounts.reduce((sum, entry) => sum + entry.total, 0);
-    const base = cosmeticsCdnBaseUrl.replace(/\/$/, '');
     const wearingSpriteUrls = Object.values(characterInfo.category_sprites ?? {})
         .filter(Boolean)
-        .map((uri) => (uri.startsWith('http') ? uri : `${base}/${uri.replace(/^\//, '')}`));
+        .map((uri) => normalizeCosmeticUrl(uri));
 
     return {
         id: userId,

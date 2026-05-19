@@ -37,6 +37,7 @@ function Worlds() {
     const [worlds, setWorlds] = useState<World[]>([]);
     const [filter, setFilter] = useState<WorldFilter>({ query: '', status: 'all' });
     const [selectedWorld, setSelectedWorld] = useState<WorldDetails | null>(null);
+    const [worldCosmeticsTotal, setWorldCosmeticsTotal] = useState(0);
     const [cosmeticsOpen, setCosmeticsOpen] = useState(false);
     const [cosmetics, setCosmetics] = useState<{ id: string; url: string }[]>([]);
     const [cosmeticsTotal, setCosmeticsTotal] = useState(0);
@@ -44,6 +45,8 @@ function Worlds() {
     const cosmeticsPageSize = 12;
     const [startJobDialog, setStartJobDialog] = useState<{ open: boolean; worldId: string; zoneId: number } | null>(null);
     const [isTestMode, setIsTestMode] = useState(false);
+    const [worldPage, setWorldPage] = useState(0);
+    const worldPageSize = 10;
 
     const loadWorlds = async (nextFilter: WorldFilter) => {
         const [data, playerCounts] = await Promise.all([
@@ -66,9 +69,11 @@ function Worlds() {
         setCosmetics([]);
         setCosmeticsTotal(0);
         setCosmeticsPage(0);
-        const [zones, playerCounts] = await Promise.all([
+        setWorldCosmeticsTotal(0);
+        const [zones, playerCounts, cosmeticsSummary] = await Promise.all([
             getWorldZones(worldId),
             getWorldPlayerCounts(worldId).catch(() => null),
+            getCosmeticsByWorld(worldId, 0, 1).catch(() => ({ total: 0 })),
         ]);
 
         const zoneCounts = new Map(
@@ -88,6 +93,7 @@ function Worlds() {
 
         const worldName = worlds.find((world) => world.id === worldId)?.name ?? 'World';
         setSelectedWorld({ id: worldId, name: worldName, zones: zonesWithCounts });
+        setWorldCosmeticsTotal(cosmeticsSummary.total);
     };
 
     const handleToggleZone = async (worldId: string, zoneId: number, isOnline: boolean) => {
@@ -123,7 +129,16 @@ function Worlds() {
         setCosmeticsOpen(true);
     };
 
-    const worldCountLabel = useMemo(() => `${worlds.length} worlds`, [worlds.length]);
+    const filteredWorlds = useMemo(
+        () => worlds.filter((world) => (filter.status === 'all' ? true : world.status === filter.status)),
+        [filter.status, worlds],
+    );
+    const visibleWorlds = useMemo(
+        () => filteredWorlds.slice(worldPage * worldPageSize, worldPage * worldPageSize + worldPageSize),
+        [filteredWorlds, worldPage],
+    );
+    const worldCountLabel = useMemo(() => `${filteredWorlds.length} worlds`, [filteredWorlds.length]);
+    const worldTotalPages = Math.max(1, Math.ceil(filteredWorlds.length / worldPageSize));
 
     return (
         <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
@@ -138,16 +153,22 @@ function Worlds() {
                             label="Search by name"
                             size="small"
                             value={filter.query}
-                            onChange={(event) => setFilter({ ...filter, query: event.target.value })}
+                                    onChange={(event) => {
+                                        setWorldPage(0);
+                                        setFilter({ ...filter, query: event.target.value });
+                                    }}
                         />
                         <Select
                             size="small"
                             value={filter.status}
                             onChange={(event) =>
-                                setFilter({
-                                    ...filter,
-                                    status: event.target.value as WorldFilter['status'],
-                                })
+                                {
+                                    setWorldPage(0);
+                                    setFilter({
+                                        ...filter,
+                                        status: event.target.value as WorldFilter['status'],
+                                    });
+                                }
                             }
                         >
                             {statusOptions.map((option) => (
@@ -169,7 +190,7 @@ function Worlds() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {worlds.map((world) => (
+                            {visibleWorlds.map((world) => (
                                 <TableRow key={world.id} hover>
                                     <TableCell>{world.name}</TableCell>
                                     <TableCell>{world.status}</TableCell>
@@ -183,6 +204,27 @@ function Worlds() {
                             ))}
                         </TableBody>
                     </Table>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={worldPage === 0}
+                        onClick={() => setWorldPage((current) => Math.max(0, current - 1))}
+                    >
+                        Previous
+                    </Button>
+                    <p className="text-xs text-[rgba(184,176,214,0.8)]">
+                        Page {worldPage + 1} of {worldTotalPages}
+                    </p>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={worldPage + 1 >= worldTotalPages}
+                        onClick={() => setWorldPage((current) => current + 1)}
+                    >
+                        Next
+                    </Button>
                 </div>
             </section>
 
@@ -226,7 +268,7 @@ function Worlds() {
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Cosmetics</p>
-                            <p>Total: {selectedWorld.zones.length > 0 ? cosmeticsTotal : 'Loading...'}</p>
+                            <p>Total: {worldCosmeticsTotal}</p>
                             <Button
                                 size="small"
                                 variant="contained"
@@ -247,7 +289,16 @@ function Worlds() {
                         {cosmetics.map((item) => (
                             <div key={item.id} className="rounded-lg border border-[#2a2640] p-3">
                                 <img src={item.url} alt="Cosmetic" className="h-24 w-full rounded object-cover" />
-                                <p className="mt-2 break-all text-xs text-[rgba(184,176,214,0.8)]">{item.url}</p>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    className="mt-2 w-full"
+                                    onClick={async () => {
+                                        await navigator.clipboard.writeText(item.url);
+                                    }}
+                                >
+                                    Copy URL
+                                </Button>
                             </div>
                         ))}
                     </div>

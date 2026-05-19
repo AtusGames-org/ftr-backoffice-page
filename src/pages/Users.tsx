@@ -16,14 +16,12 @@ import {
 } from '@mui/material';
 import {
     getUserDetails,
-    getUsers,
+    getUsersPage,
     grantAdmin,
-    User,
-    UserDetails,
-    UserFilter,
     updateUserGems,
 } from '../services/userService';
 import { getCosmeticsByCategory, getCosmeticsCategories } from '../services/assetsService';
+import type { User, UserDetails, UserFilter } from '../services/userService';
 
 const verifiedOptions: { label: string; value: UserFilter['verified'] }[] = [
     { label: 'All', value: 'all' },
@@ -35,6 +33,8 @@ function Users() {
     const [users, setUsers] = useState<User[]>([]);
     const [filter, setFilter] = useState<UserFilter>({ query: '', verified: 'all' });
     const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null);
+    const [usersPage, setUsersPage] = useState(0);
+    const [usersTotal, setUsersTotal] = useState(0);
     const [gemDialogOpen, setGemDialogOpen] = useState(false);
     const [gemTarget, setGemTarget] = useState<User | null>(null);
     const [gemInput, setGemInput] = useState('');
@@ -43,15 +43,17 @@ function Users() {
     const [cosmeticsTotal, setCosmeticsTotal] = useState(0);
     const [cosmeticsPage, setCosmeticsPage] = useState(0);
     const cosmeticsPageSize = 12;
+    const usersPageSize = 20;
 
-    const loadUsers = async (nextFilter: UserFilter) => {
-        const data = await getUsers(nextFilter);
-        setUsers(data);
+    const loadUsers = async (nextFilter: UserFilter, page = usersPage) => {
+        const response = await getUsersPage(nextFilter, page * usersPageSize, usersPageSize);
+        setUsers(response.items);
+        setUsersTotal(response.total);
     };
 
     useEffect(() => {
-        loadUsers(filter);
-    }, [filter]);
+        loadUsers(filter, usersPage);
+    }, [filter, usersPage]);
 
     const handleSelectUser = async (userId: string) => {
         const details = await getUserDetails(userId);
@@ -72,8 +74,7 @@ function Users() {
                 limit: 1000,
             });
             allCosmetics.push(...result.items);
-            totalCount = result.total;
-            if (allCosmetics.length >= (page + 1) * cosmeticsPageSize) break;
+            totalCount += result.total;
         }
 
         setCosmetics(allCosmetics.slice(offset, offset + cosmeticsPageSize));
@@ -84,7 +85,7 @@ function Users() {
 
     const handleGrantAdmin = async (userId: string) => {
         await grantAdmin(userId);
-        await loadUsers(filter);
+        await loadUsers(filter, usersPage);
         if (selectedUser?.id === userId) {
             const details = await getUserDetails(userId);
             setSelectedUser(details);
@@ -106,7 +107,7 @@ function Users() {
             return;
         }
         await updateUserGems(gemTarget.id, nextValue);
-        await loadUsers(filter);
+        await loadUsers(filter, usersPage);
         if (selectedUser?.id === gemTarget.id) {
             const details = await getUserDetails(gemTarget.id);
             setSelectedUser(details);
@@ -114,7 +115,8 @@ function Users() {
         setGemDialogOpen(false);
     };
 
-    const userCountLabel = useMemo(() => `${users.length} users`, [users.length]);
+    const userCountLabel = useMemo(() => `${usersTotal} users`, [usersTotal]);
+    const totalUserPages = Math.max(1, Math.ceil(usersTotal / usersPageSize));
 
     return (
         <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
@@ -129,17 +131,21 @@ function Users() {
                             label="Search by email"
                             size="small"
                             value={filter.query}
-                            onChange={(event) => setFilter({ ...filter, query: event.target.value })}
+                            onChange={(event) => {
+                                setUsersPage(0);
+                                setFilter({ ...filter, query: event.target.value });
+                            }}
                         />
                         <Select
                             size="small"
                             value={filter.verified}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                                setUsersPage(0);
                                 setFilter({
                                     ...filter,
                                     verified: event.target.value as UserFilter['verified'],
-                                })
-                            }
+                                });
+                            }}
                         >
                             {verifiedOptions.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
@@ -194,6 +200,27 @@ function Users() {
                             ))}
                         </TableBody>
                     </Table>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={usersPage === 0}
+                        onClick={() => setUsersPage((current) => Math.max(0, current - 1))}
+                    >
+                        Previous
+                    </Button>
+                    <p className="text-xs text-[rgba(184,176,214,0.8)]">
+                        Page {usersPage + 1} of {totalUserPages}
+                    </p>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={usersPage + 1 >= totalUserPages}
+                        onClick={() => setUsersPage((current) => current + 1)}
+                    >
+                        Next
+                    </Button>
                 </div>
             </section>
 
@@ -258,7 +285,7 @@ function Users() {
                         type="number"
                         value={gemInput}
                         onChange={(event) => setGemInput(event.target.value)}
-                        inputProps={{ min: 0 }}
+                        slotProps={{ htmlInput: { min: 0 } }}
                     />
                 </DialogContent>
                 <DialogActions>
