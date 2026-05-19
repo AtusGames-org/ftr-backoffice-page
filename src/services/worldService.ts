@@ -78,8 +78,8 @@ export const getWorldZones = async (worldId: string): Promise<Zone[]> => {
     }));
 };
 
-export const startZoneJob = async (worldId: string, zoneId: number) =>
-    apiRequest<void>(`/world/orchestrator/${worldId}/zones/${zoneId}/start-job`, { method: 'GET' });
+export const startZoneJob = async (worldId: string, zoneId: number, isTest: boolean = false) =>
+    apiRequest<void>(`/world/orchestrator/${worldId}/zones/${zoneId}/start-job?test=${isTest}`, { method: 'GET' });
 
 export const stopZoneJob = async (worldId: string, zoneId: number) =>
     apiRequest<void>(`/world/orchestrator/${worldId}/zones/${zoneId}/stop-job`, { method: 'GET' });

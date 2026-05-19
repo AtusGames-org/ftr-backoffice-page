@@ -2,6 +2,7 @@ import { getAllCreatorBalances, getAllGemBalances } from './paymentService';
 import { getUsers } from './userService';
 import { getAllWorldPlayerCounts } from './worldPlayersService';
 import { getWorlds } from './worldService';
+import { getCosmeticsCount } from './assetsService';
 
 export interface MetricsSummary {
     totalPlayers: number;
@@ -18,15 +19,17 @@ export interface MetricsSummary {
     avgCosmeticPrice: number | null;
     totalCreatorBalance: number;
     totalGemsInCirculation: number;
+    lastSyncTime: Date;
 }
 
 export const getMetricsSummary = async (): Promise<MetricsSummary> => {
-    const [users, worlds, playerCounts, gemBalances, creatorBalances] = await Promise.all([
+    const [users, worlds, playerCounts, gemBalances, creatorBalances, totalCosmeticsCount] = await Promise.all([
         getUsers({ query: '', verified: 'all' }),
         getWorlds({ query: '', status: 'all' }),
         getAllWorldPlayerCounts().catch(() => []),
         getAllGemBalances().catch(() => []),
         getAllCreatorBalances().catch(() => []),
+        getCosmeticsCount().catch(() => 0),
     ]);
 
     const totalPlayers = users.length;
@@ -49,9 +52,10 @@ export const getMetricsSummary = async (): Promise<MetricsSummary> => {
         avgPlayerTime: null,
         gemsBought: null,
         gemsSpent: null,
-        totalCosmetics: null,
+        totalCosmetics: totalCosmeticsCount || null,
         avgCosmeticPrice: null,
         totalCreatorBalance,
         totalGemsInCirculation,
+        lastSyncTime: new Date(),
     };
 };

@@ -42,6 +42,8 @@ function Worlds() {
     const [cosmeticsTotal, setCosmeticsTotal] = useState(0);
     const [cosmeticsPage, setCosmeticsPage] = useState(0);
     const cosmeticsPageSize = 12;
+    const [startJobDialog, setStartJobDialog] = useState<{ open: boolean; worldId: string; zoneId: number } | null>(null);
+    const [isTestMode, setIsTestMode] = useState(false);
 
     const loadWorlds = async (nextFilter: WorldFilter) => {
         const [data, playerCounts] = await Promise.all([
@@ -91,10 +93,22 @@ function Worlds() {
     const handleToggleZone = async (worldId: string, zoneId: number, isOnline: boolean) => {
         if (isOnline) {
             await stopZoneJob(worldId, zoneId);
+            await handleSelectWorld(worldId);
         } else {
-            await startZoneJob(worldId, zoneId);
+            setStartJobDialog({ open: true, worldId, zoneId });
+            setIsTestMode(false);
         }
-        await handleSelectWorld(worldId);
+    };
+
+    const handleStartJob = async () => {
+        if (!startJobDialog) return;
+        try {
+            await startZoneJob(startJobDialog.worldId, startJobDialog.zoneId, isTestMode);
+            setStartJobDialog(null);
+            await handleSelectWorld(startJobDialog.worldId);
+        } catch (err) {
+            console.error('Failed to start job', err);
+        }
     };
 
     const handleOpenCosmetics = async (worldId: string, page = 0) => {
@@ -161,14 +175,9 @@ function Worlds() {
                                     <TableCell>{world.status}</TableCell>
                                     <TableCell>{world.activePlayers}</TableCell>
                                     <TableCell align="right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button size="small" variant="text" onClick={() => handleSelectWorld(world.id)}>
-                                                Details
-                                            </Button>
-                                            <Button size="small" variant="outlined" color="secondary">
-                                                Notify
-                                            </Button>
-                                        </div>
+                                        <Button size="small" variant="text" onClick={() => handleSelectWorld(world.id)}>
+                                            Details
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -217,7 +226,7 @@ function Worlds() {
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Cosmetics</p>
-                            <p>Total: {cosmeticsTotal || 'Unknown'}</p>
+                            <p>Total: {selectedWorld.zones.length > 0 ? cosmeticsTotal : 'Loading...'}</p>
                             <Button
                                 size="small"
                                 variant="contained"
@@ -231,13 +240,14 @@ function Worlds() {
                 )}
             </aside>
 
-            <Dialog open={cosmeticsOpen} onClose={() => setCosmeticsOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Cosmetics List</DialogTitle>
+            <Dialog open={cosmeticsOpen} onClose={() => setCosmeticsOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle>Cosmetics List - {selectedWorld?.name ?? 'World'}</DialogTitle>
                 <DialogContent>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-4 gap-4">
                         {cosmetics.map((item) => (
-                            <div key={item.id} className="rounded-lg border border-[#2a2640] p-2 text-sm">
-                                <img src={item.url} alt="Cosmetic" className="h-20 w-full rounded object-cover" />
+                            <div key={item.id} className="rounded-lg border border-[#2a2640] p-3">
+                                <img src={item.url} alt="Cosmetic" className="h-24 w-full rounded object-cover" />
+                                <p className="mt-2 break-all text-xs text-[rgba(184,176,214,0.8)]">{item.url}</p>
                             </div>
                         ))}
                     </div>
@@ -263,6 +273,32 @@ function Worlds() {
                         </Button>
                     </div>
                 </DialogContent>
+            </Dialog>
+
+            <Dialog open={startJobDialog?.open ?? false} onClose={() => setStartJobDialog(null)}>
+                <DialogTitle>Start Zone Job</DialogTitle>
+                <DialogContent>
+                    <div className="space-y-4 py-4">
+                        <p className="text-sm">Zone {startJobDialog?.zoneId} - World {selectedWorld?.name}</p>
+                        <label className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                checked={isTestMode}
+                                onChange={(e) => setIsTestMode(e.target.checked)}
+                                className="h-4 w-4"
+                            />
+                            <span className="text-sm">Start in test mode</span>
+                        </label>
+                    </div>
+                </DialogContent>
+                <div className="flex justify-end gap-2 p-4">
+                    <Button onClick={() => setStartJobDialog(null)} variant="outlined">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleStartJob} variant="contained" color="primary">
+                        Start Job
+                    </Button>
+                </div>
             </Dialog>
         </div>
     );

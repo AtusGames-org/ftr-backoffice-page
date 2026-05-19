@@ -9,13 +9,20 @@ function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
+        setError('');
         setIsSubmitting(true);
-        await login(email, password);
-        setIsSubmitting(false);
-        navigate('/');
+        try {
+            await login(email, password);
+            navigate('/');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -27,6 +34,7 @@ function Login() {
                     <p className="text-sm text-[rgba(184,176,214,0.8)]">Enter the realm administration console.</p>
                 </div>
                 <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                    {error && <div className="rounded-lg border border-red-500 bg-red-900/20 p-3 text-sm text-red-400">{error}</div>}
                     <TextField
                         label="Email"
                         variant="outlined"

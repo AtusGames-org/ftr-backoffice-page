@@ -23,6 +23,7 @@ import {
     UserFilter,
     updateUserGems,
 } from '../services/userService';
+import { getCosmeticsByCategory, getCosmeticsCategories } from '../services/assetsService';
 
 const verifiedOptions: { label: string; value: UserFilter['verified'] }[] = [
     { label: 'All', value: 'all' },
@@ -37,6 +38,11 @@ function Users() {
     const [gemDialogOpen, setGemDialogOpen] = useState(false);
     const [gemTarget, setGemTarget] = useState<User | null>(null);
     const [gemInput, setGemInput] = useState('');
+    const [cosmeticsOpen, setCosmeticsOpen] = useState(false);
+    const [cosmetics, setCosmetics] = useState<{ id: string; url: string }[]>([]);
+    const [cosmeticsTotal, setCosmeticsTotal] = useState(0);
+    const [cosmeticsPage, setCosmeticsPage] = useState(0);
+    const cosmeticsPageSize = 12;
 
     const loadUsers = async (nextFilter: UserFilter) => {
         const data = await getUsers(nextFilter);
@@ -50,6 +56,30 @@ function Users() {
     const handleSelectUser = async (userId: string) => {
         const details = await getUserDetails(userId);
         setSelectedUser(details);
+    };
+
+    const handleOpenUserCosmetics = async (userId: string, page = 0) => {
+        if (!userId) return;
+        const categories = await getCosmeticsCategories();
+        const offset = page * cosmeticsPageSize;
+        const allCosmetics: { id: string; url: string }[] = [];
+        let totalCount = 0;
+
+        for (const cat of categories) {
+            const result = await getCosmeticsByCategory(cat.category_id, {
+                playerId: userId,
+                offset: 0,
+                limit: 1000,
+            });
+            allCosmetics.push(...result.items);
+            totalCount = result.total;
+            if (allCosmetics.length >= (page + 1) * cosmeticsPageSize) break;
+        }
+
+        setCosmetics(allCosmetics.slice(offset, offset + cosmeticsPageSize));
+        setCosmeticsTotal(totalCount);
+        setCosmeticsPage(page);
+        setCosmeticsOpen(true);
     };
 
     const handleGrantAdmin = async (userId: string) => {
@@ -180,7 +210,7 @@ function Users() {
                             <p className="text-[rgba(184,176,214,0.8)]">{selectedUser.bio}</p>
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Sprites</p>
+                            <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Cosmetics</p>
                             <p>Owned: {selectedUser.ownedSprites}</p>
                             <p>Wearing: {selectedUser.wearingSprites}</p>
                             {selectedUser.wearingSpriteUrls.length > 0 && (
@@ -195,6 +225,15 @@ function Users() {
                                     ))}
                                 </div>
                             )}
+                            <Button
+                                size="small"
+                                variant="contained"
+                                color="primary"
+                                className="mt-3"
+                                onClick={() => handleOpenUserCosmetics(selectedUser.id, 0)}
+                            >
+                                View All Cosmetics
+                            </Button>
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Gems</p>
@@ -230,6 +269,41 @@ function Users() {
                         Save
                     </Button>
                 </DialogActions>
+            </Dialog>
+
+            <Dialog open={cosmeticsOpen} onClose={() => setCosmeticsOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle>User Cosmetics - {selectedUser?.characterName ?? 'Player'}</DialogTitle>
+                <DialogContent>
+                    <div className="grid grid-cols-4 gap-4">
+                        {cosmetics.map((item) => (
+                            <div key={item.id} className="rounded-lg border border-[#2a2640] p-3">
+                                <img src={item.url} alt="Cosmetic" className="h-24 w-full rounded object-cover" />
+                                <p className="mt-2 break-all text-xs text-[rgba(184,176,214,0.8)]">{item.url}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-4 flex items-center justify-between">
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            disabled={cosmeticsPage === 0}
+                            onClick={() => handleOpenUserCosmetics(selectedUser?.id ?? '', cosmeticsPage - 1)}
+                        >
+                            Previous
+                        </Button>
+                        <p className="text-xs text-[rgba(184,176,214,0.8)]">
+                            Page {cosmeticsPage + 1} of {Math.max(1, Math.ceil(cosmeticsTotal / cosmeticsPageSize))}
+                        </p>
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            disabled={(cosmeticsPage + 1) * cosmeticsPageSize >= cosmeticsTotal}
+                            onClick={() => handleOpenUserCosmetics(selectedUser?.id ?? '', cosmeticsPage + 1)}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </DialogContent>
             </Dialog>
         </div>
     );

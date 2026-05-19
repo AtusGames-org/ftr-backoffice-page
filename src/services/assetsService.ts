@@ -51,7 +51,7 @@ export const getCosmeticsByWorld = async (
   worldId: string,
   offset = 0,
   limit = 24,
-): Promise<{ items: { id: string; url: string }[]; total: number }> => {
+): Promise<{ items: { id: string; url: string; world?: string }[]; total: number }> => {
   const response = await apiRequest<CosmeticListResponse>(
     `/assets/cosmetics/worlds/${worldId}?offset=${offset}&limit=${limit}`,
   );
@@ -62,4 +62,19 @@ export const getCosmeticsByWorld = async (
     })),
     total: response.total_count,
   };
+};
+
+export const getCosmeticsCount = async (): Promise<number> => {
+  const categories = await getCosmeticsCategories();
+  let total = 0;
+  for (const cat of categories) {
+    const result = await getCosmeticsByCategory(cat.category_id, { offset: 0, limit: 1 });
+    total += result.total;
+  }
+  return total;
+};
+
+export const getAverageCosmeticPrice = async (): Promise<number> => {
+  // If backend has a dedicated endpoint, use it; otherwise aggregate
+  return 0; // Placeholder - backend should provide this
 };
