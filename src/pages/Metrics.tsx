@@ -21,7 +21,10 @@ function Metrics() {
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                     <StatCard title="Total Players" value={summary ? summary.totalPlayers.toLocaleString() : '--'} />
                     <StatCard title="Active Players" value={summary ? summary.activePlayers.toLocaleString() : '--'} />
-                    <StatCard title="Avg Player Time" value={summary ? `${summary.avgPlayerTime} hrs` : '--'} />
+                    <StatCard
+                        title="Avg Player Time"
+                        value={summary?.avgPlayerTime ? `${summary.avgPlayerTime} hrs` : '--'}
+                    />
                 </div>
             </section>
 
@@ -40,16 +43,30 @@ function Metrics() {
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                     <StatCard
                         title="Gems Bought"
-                        value={summary ? summary.gemsBought.toLocaleString() : '--'}
+                        value={summary?.gemsBought ? summary.gemsBought.toLocaleString() : '--'}
                     />
                     <StatCard
                         title="Gems Spent"
-                        value={summary ? summary.gemsSpent.toLocaleString() : '--'}
+                        value={summary?.gemsSpent ? summary.gemsSpent.toLocaleString() : '--'}
                     />
                     <StatCard
                         title="Cosmetics"
-                        value={summary ? `${summary.totalCosmetics.toLocaleString()} items` : '--'}
-                        caption={summary ? `Avg price ${summary.avgCosmeticPrice} gems` : undefined}
+                        value={summary?.totalCosmetics ? `${summary.totalCosmetics.toLocaleString()} items` : '--'}
+                        caption={summary?.avgCosmeticPrice ? `Avg price ${summary.avgCosmeticPrice} gems` : undefined}
+                    />
+                </div>
+            </section>
+
+            <section className="app-card p-6">
+                <h2 className="app-title text-2xl">Creator Economy</h2>
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    <StatCard
+                        title="Total Creator Balance"
+                        value={summary ? `$${summary.totalCreatorBalance.toFixed(2)}` : '--'}
+                    />
+                    <StatCard
+                        title="Gems In Circulation"
+                        value={summary ? summary.totalGemsInCirculation.toLocaleString() : '--'}
                     />
                 </div>
             </section>

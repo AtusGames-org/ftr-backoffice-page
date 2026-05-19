@@ -24,7 +24,11 @@ function Dashboard() {
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                     <StatCard title="Total Players" value={summary ? summary.totalPlayers.toLocaleString() : '--'} caption="All-time registered" />
                     <StatCard title="Active Players" value={summary ? summary.activePlayers.toLocaleString() : '--'} caption="Currently in world" />
-                    <StatCard title="Avg Player Time" value={summary ? `${summary.avgPlayerTime} hrs` : '--'} caption="Per weekly session" />
+                    <StatCard
+                        title="Avg Player Time"
+                        value={summary?.avgPlayerTime ? `${summary.avgPlayerTime} hrs` : '--'}
+                        caption="Per weekly session"
+                    />
                 </div>
             </section>
 
@@ -41,7 +45,11 @@ function Dashboard() {
                 />
                 <StatCard
                     title="Gems Flow"
-                    value={summary ? `${summary.gemsBought.toLocaleString()} / ${summary.gemsSpent.toLocaleString()}` : '--'}
+                    value={
+                        summary?.gemsBought && summary?.gemsSpent
+                            ? `${summary.gemsBought.toLocaleString()} / ${summary.gemsSpent.toLocaleString()}`
+                            : '--'
+                    }
                     caption="Bought vs spent"
                 />
             </section>
@@ -51,15 +59,28 @@ function Dashboard() {
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                     <StatCard
                         title="Total Cosmetics"
-                        value={summary ? summary.totalCosmetics.toLocaleString() : '--'}
+                        value={summary?.totalCosmetics ? summary.totalCosmetics.toLocaleString() : '--'}
                         caption="Across all realms"
                     />
                     <StatCard
                         title="Average Price"
-                        value={summary ? `${summary.avgCosmeticPrice} gems` : '--'}
+                        value={summary?.avgCosmeticPrice ? `${summary.avgCosmeticPrice} gems` : '--'}
                         caption="Weighted market rate"
                     />
                 </div>
+            </section>
+
+            <section className="grid gap-4 md:grid-cols-2">
+                <StatCard
+                    title="Creator Balance"
+                    value={summary ? `$${summary.totalCreatorBalance.toFixed(2)}` : '--'}
+                    caption="Total earnings pooled"
+                />
+                <StatCard
+                    title="Gems In Circulation"
+                    value={summary ? summary.totalGemsInCirculation.toLocaleString() : '--'}
+                    caption="All player balances"
+                />
             </section>
         </div>
     );

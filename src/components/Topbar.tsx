@@ -1,5 +1,6 @@
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@mui/material';
+import { logout } from '../services/authService';
 
 const titles: Record<string, string> = {
     '/': 'Dashboard',
@@ -17,7 +18,13 @@ const navItems = [
 
 function Topbar() {
     const location = useLocation();
+    const navigate = useNavigate();
     const title = titles[location.pathname] ?? 'Dashboard';
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     return (
         <header className="sticky top-0 z-20 border-b border-[#2a2640] bg-black/40 backdrop-blur">
@@ -32,11 +39,10 @@ function Topbar() {
                             Last sync: 2 min ago
                         </div>
                         <Button
-                            component={Link}
-                            to="/login"
                             variant="outlined"
                             color="secondary"
                             size="small"
+                            onClick={handleLogout}
                         >
                             Logout
                         </Button>

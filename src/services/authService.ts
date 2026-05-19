@@ -1,24 +1,23 @@
-import { delay } from './serviceUtils';
-
-export interface AdminUser {
-    id: string;
-    email: string;
-    name: string;
-}
+import { apiRequest } from './apiClient';
+import { authStorage } from './authStorage';
 
 export interface AuthResponse {
-    token: string;
-    user: AdminUser;
+    access_token: string;
+    refresh_token: string;
+    id: string;
+    email: string;
 }
 
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
-    await delay(600);
-    return {
-        token: 'mock-token',
-        user: {
-            id: 'admin-001',
-            email,
-            name: 'Realm Steward',
-        },
-    };
+    const response = await apiRequest<AuthResponse>('/auth/login', {
+        method: 'POST',
+        body: { email, password },
+        skipAuth: true,
+    });
+    authStorage.setSession(response.access_token, response.refresh_token, response.email);
+    return response;
+};
+
+export const logout = () => {
+    authStorage.clearSession();
 };

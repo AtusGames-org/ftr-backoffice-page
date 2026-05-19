@@ -183,10 +183,26 @@ function Users() {
                             <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Sprites</p>
                             <p>Owned: {selectedUser.ownedSprites}</p>
                             <p>Wearing: {selectedUser.wearingSprites}</p>
+                            {selectedUser.wearingSpriteUrls.length > 0 && (
+                                <div className="mt-3 grid grid-cols-4 gap-2">
+                                    {selectedUser.wearingSpriteUrls.map((spriteUrl) => (
+                                        <img
+                                            key={spriteUrl}
+                                            src={spriteUrl}
+                                            alt="Cosmetic"
+                                            className="h-12 w-12 rounded border border-[#2a2640] object-cover"
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Gems</p>
                             <p className="text-lg font-semibold text-[#f8f5ff]">{selectedUser.totalGems.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Creator Balance</p>
+                            <p className="text-lg font-semibold text-[#f8f5ff]">${selectedUser.creatorBalance.toFixed(2)}</p>
                         </div>
                     </div>
                 )}
