@@ -15,7 +15,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 interface ApiRequestOptions {
   method?: HttpMethod;
-  body?: unknown;
+  body?: unknown | FormData;
   headers?: Record<string, string>;
   skipAuth?: boolean;
 }
@@ -72,14 +72,23 @@ const refreshSession = async () => {
 
 export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {}): Promise<T> => {
   const accessToken = authStorage.getAccessToken();
+  const isFormData = options.body instanceof FormData;
+  let requestBody: BodyInit | undefined;
+
+  if (isFormData) {
+    requestBody = options.body as FormData;
+  } else if (options.body) {
+    requestBody = JSON.stringify(options.body);
+  }
+
   const response = await fetch(buildUrl(path), {
     method: options.method ?? 'GET',
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(options.headers ?? {}),
       ...(options.skipAuth || !accessToken ? {} : { Authorization: `Bearer ${accessToken}` }),
     },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: requestBody,
   });
 
   if (response.status === 401 && !options.skipAuth) {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import StatCard from '../components/StatCard';
-import { getMetricsSummary, MetricsSummary } from '../services/metricsService';
+import { getMetricsSummary } from '../services/metricsService';
+import type { MetricsSummary } from '../services/metricsService';
 
 function Dashboard() {
     const [summary, setSummary] = useState<MetricsSummary | null>(null);

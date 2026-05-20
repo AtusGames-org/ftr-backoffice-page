@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { GiCastle, GiCrown, GiDragonHead, GiRank3 } from 'react-icons/gi';
+import { GiCastle, GiCrown, GiDragonHead, GiRank3, GiScrollUnfurled } from 'react-icons/gi';
 import logo from '../assets/ftr_logo.jpeg';
 import { getMetricsSummary } from '../services/metricsService';
 
@@ -9,6 +9,7 @@ const navItems = [
     { to: '/users', label: 'Users', icon: GiCrown },
     { to: '/worlds', label: 'Worlds', icon: GiCastle },
     { to: '/metrics', label: 'Metrics', icon: GiRank3 },
+    { to: '/exports', label: 'Exports', icon: GiScrollUnfurled },
 ];
 
 function Sidebar() {
@@ -45,7 +46,7 @@ function Sidebar() {
     }, []);
 
     return (
-        <aside className="app-sidebar hidden w-64 flex-col border-r border-[#2a2640] px-5 pb-8 pt-6 md:flex">
+        <aside className="app-sidebar hidden w-80 flex-col overflow-y-auto border-r border-[#2a2640] px-5 pb-8 pt-6 md:flex">
             <div className="flex items-center gap-3">
                 <img src={logo} alt="Feed the Realm" className="h-10 w-10 rounded-full border border-[rgba(245,180,74,0.5)]" />
                 <div>
