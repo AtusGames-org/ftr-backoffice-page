@@ -6,7 +6,7 @@ export interface World {
     id: string;
     name: string;
     status: WorldStatus;
-    activePlayers: number;
+    activePlayers: number | null;
     zoneCount: number;
     onlineZoneCount: number;
 }
@@ -63,7 +63,7 @@ const fetchWorldsPage = async (filter: WorldFilter, pagination: Required<WorldPa
             id: world.id,
             name: world.name,
             status: deriveStatus(world.zones),
-            activePlayers: 0,
+            activePlayers: null,
             zoneCount: world.zones.length,
             onlineZoneCount: world.zones.filter((zone) => zone.is_online).length,
         })),

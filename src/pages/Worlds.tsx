@@ -21,11 +21,12 @@ import {
     stopZoneJob,
 } from '../services/worldService';
 import { getCosmeticsByWorld } from '../services/assetsService';
-import { getAllWorldPlayerCounts, getWorldPlayerCounts } from '../services/worldPlayersService';
+import { getWorldPlayerCounts } from '../services/worldPlayersService';
 import CosmeticsDialog from '../components/CosmeticsDialog';
 import CosmeticPreviewDialog from '../components/CosmeticPreviewDialog';
 import type { CosmeticPreviewItem } from '../components/CosmeticPreviewDialog';
 import type { World, WorldDetails, WorldFilter } from '../services/worldService';
+import type { PlayerCounts } from '../services/worldPlayersService';
 
 const statusOptions: { label: string; value: WorldFilter['status'] }[] = [
     { label: 'All', value: 'all' },
@@ -45,6 +46,7 @@ function Worlds() {
     const [cosmeticsPage, setCosmeticsPage] = useState(0);
     const [previewItem, setPreviewItem] = useState<CosmeticPreviewItem | null>(null);
     const [previewOpen, setPreviewOpen] = useState(false);
+    const [selectedWorldCounts, setSelectedWorldCounts] = useState<PlayerCounts | null>(null);
     const cosmeticsPageSize = 12;
     const [startJobDialog, setStartJobDialog] = useState<{ open: boolean; worldId: string; zoneId: number } | null>(null);
     const [isTestMode, setIsTestMode] = useState(false);
@@ -52,16 +54,8 @@ function Worlds() {
     const worldPageSize = 10;
 
     const loadWorlds = async (nextFilter: WorldFilter) => {
-        const [data, playerCounts] = await Promise.all([
-            getWorlds(nextFilter),
-            getAllWorldPlayerCounts().catch(() => []),
-        ]);
-        const countByWorld = new Map(playerCounts.map((entry) => [entry.world_id, entry.total_players]));
-        const merged = data.map((world) => ({
-            ...world,
-            activePlayers: countByWorld.get(world.id) ?? 0,
-        }));
-        setWorlds(merged);
+        const data = await getWorlds(nextFilter);
+        setWorlds(data);
     };
 
     useEffect(() => {
@@ -73,22 +67,18 @@ function Worlds() {
         setCosmeticsTotal(0);
         setCosmeticsPage(0);
         setWorldCosmeticsTotal(0);
+        setSelectedWorldCounts(null);
         const [zones, playerCounts, cosmeticsSummary] = await Promise.all([
             getWorldZones(worldId),
             getWorldPlayerCounts(worldId).catch(() => null),
             getCosmeticsByWorld(worldId, 0, 1).catch(() => ({ total: 0 })),
         ]);
 
-        const zoneCounts = new Map(
-            playerCounts?.zones.map((zone) => [zone.zone_id, zone.active_players]) ?? [],
-        );
-
         const zonesWithCounts = await Promise.all(
             zones.map(async (zone) => {
                 const address = zone.isOnline ? await getZoneAddress(worldId, zone.id).catch(() => undefined) : undefined;
                 return {
                     ...zone,
-                    activePlayers: zoneCounts.get(zone.id) ?? 0,
                     address,
                 };
             }),
@@ -97,6 +87,7 @@ function Worlds() {
         const worldName = worlds.find((world) => world.id === worldId)?.name ?? 'World';
         setSelectedWorld({ id: worldId, name: worldName, zones: zonesWithCounts });
         setWorldCosmeticsTotal(cosmeticsSummary.total);
+        setSelectedWorldCounts(playerCounts);
     };
 
     const handleToggleZone = async (worldId: string, zoneId: number, isOnline: boolean) => {
@@ -187,7 +178,6 @@ function Worlds() {
                             <TableRow>
                                 <TableCell>Name</TableCell>
                                 <TableCell>Status</TableCell>
-                                <TableCell>Active Players</TableCell>
                                 <TableCell align="right">Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -196,7 +186,6 @@ function Worlds() {
                                 <TableRow key={world.id} hover>
                                     <TableCell>{world.name}</TableCell>
                                     <TableCell>{world.status}</TableCell>
-                                    <TableCell>{world.activePlayers}</TableCell>
                                     <TableCell align="right">
                                         <Button size="small" variant="text" onClick={() => handleSelectWorld(world.id)}>
                                             Details
@@ -237,6 +226,15 @@ function Worlds() {
                 )}
                 {selectedWorld && (
                     <div className="mt-4 space-y-4 text-sm">
+                        <div className="rounded-lg border border-[#2a2640] px-3 py-2">
+                            <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">World Players</p>
+                            <p className="mt-2 text-xs text-[rgba(184,176,214,0.8)]">
+                                Active players: {selectedWorldCounts ? selectedWorldCounts.active_players : '--'}
+                            </p>
+                            <p className="text-xs text-[rgba(184,176,214,0.8)]">
+                                Avg player time: {selectedWorldCounts ? `${selectedWorldCounts.average_player_time} min` : '--'}
+                            </p>
+                        </div>
                         <div>
                             <p className="text-xs uppercase tracking-[0.3em] text-[#6ae4ff]">Zones</p>
                             <div className="mt-2 space-y-2">
@@ -251,9 +249,6 @@ function Worlds() {
                                                 {zone.address && (
                                                     <p className="text-xs text-[rgba(184,176,214,0.8)]">{zone.address}</p>
                                                 )}
-                                                <p className="text-xs text-[rgba(184,176,214,0.8)]">
-                                                    Active players: {zone.activePlayers ?? 0}
-                                                </p>
                                             </div>
                                             <Button
                                                 size="small"

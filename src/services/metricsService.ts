@@ -28,7 +28,7 @@ export const getMetricsSummary = async (): Promise<MetricsSummary> => {
     const [users, worlds, playerCounts, gemBalances, creatorBalances, cosmeticsSummary] = await Promise.all([
         getUsers({ query: '', verified: 'all' }),
         getWorlds({ query: '', status: 'all' }),
-        getAllWorldPlayerCounts().catch(() => []),
+        getAllWorldPlayerCounts().catch(() => null),
         getAllGemBalances().catch(() => []),
         getAllCreatorBalances().catch(() => []),
         getCosmeticsEconomySummary().catch(() => ({ defaultCosmetics: 0, userCreatedCosmetics: 0, averagePrice: 0 })),
@@ -39,10 +39,8 @@ export const getMetricsSummary = async (): Promise<MetricsSummary> => {
     const totalZones = worlds.reduce((sum, world) => sum + world.zoneCount, 0);
     const onlineZones = worlds.reduce((sum, world) => sum + world.onlineZoneCount, 0);
     const avgZonesPerWorld = worlds.length > 0 ? Number((totalZones / worlds.length).toFixed(1)) : 0;
-    const activePlayers = playerCounts.reduce((sum, world) => sum + world.total_players, 0);
-    const avgPlayerTime = playerCounts.length > 0
-        ? Math.round(playerCounts.reduce((sum, world) => sum + world.average_player_time, 0) / playerCounts.length)
-        : null;
+    const activePlayers = playerCounts?.active_players ?? 0;
+    const avgPlayerTime = playerCounts ? playerCounts.average_player_time : null;
     const totalCreatorBalance = creatorBalances.reduce((sum, balance) => sum + balance.balance, 0);
     const totalGemsInCirculation = gemBalances.reduce((sum, balance) => sum + balance.gems, 0);
 
