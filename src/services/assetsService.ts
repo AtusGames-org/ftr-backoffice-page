@@ -28,6 +28,12 @@ export interface CosmeticsEconomySummary {
   averagePrice: number;
 }
 
+interface CosmeticsEconomySummaryResponse {
+  default_cosmetics: number;
+  user_created_cosmetics: number;
+  average_price: number;
+}
+
 export const normalizeCosmeticUrl = (uri: string) => {
   if (!uri) {
     return '';
@@ -92,53 +98,11 @@ export const getCosmeticsByWorld = async (
   };
 };
 
-const collectPagedCosmetics = async (
-  fetchPage: (offset: number, limit: number) => Promise<{ items: { id: string; url: string }[]; total: number }>,
-) => {
-  const pageSize = 200;
-  const collected: { id: string; url: string }[] = [];
-  let offset = 0;
-  let total = Number.POSITIVE_INFINITY;
-
-  while (offset < total) {
-    const page = await fetchPage(offset, pageSize);
-    collected.push(...page.items);
-    total = page.total;
-    if (page.items.length === 0) {
-      break;
-    }
-    offset += page.items.length;
-  }
-
-  return collected;
-};
-
 export const getCosmeticsEconomySummary = async (): Promise<CosmeticsEconomySummary> => {
-  const categories = await getCosmeticsCategories();
-  const defaultCosmetics = (
-    await Promise.all(
-      categories.map((category) =>
-        collectPagedCosmetics((offset, limit) => getCosmeticsByCategory(category.category_id, { offset, limit })),
-      ),
-    )
-  ).flat();
-
-  const { getAllWorlds } = await import('./worldService');
-  const worlds = await getAllWorlds({ query: '', status: 'all' });
-  const userCreatedCosmetics = (
-    await Promise.all(worlds.map((world) => collectPagedCosmetics((offset, limit) => getCosmeticsByWorld(world.id, offset, limit))))
-  ).flat();
-
-  if (userCreatedCosmetics.length === 0) {
-    return { defaultCosmetics: defaultCosmetics.length, userCreatedCosmetics: 0, averagePrice: 0 };
-  }
-
-  const pricedCosmetics = await Promise.all(userCreatedCosmetics.map((cosmetic) => getCosmeticByIdInternal(cosmetic.id)));
-  const totalPrice = pricedCosmetics.reduce((sum, cosmetic) => sum + cosmetic.cosmetic_price, 0);
-
+  const response = await apiRequest<CosmeticsEconomySummaryResponse>('/assets/cosmetics/economy-summary');
   return {
-    defaultCosmetics: defaultCosmetics.length,
-    userCreatedCosmetics: userCreatedCosmetics.length,
-    averagePrice: Number((totalPrice / pricedCosmetics.length).toFixed(2)),
+    defaultCosmetics: response.default_cosmetics ?? 0,
+    userCreatedCosmetics: response.user_created_cosmetics ?? 0,
+    averagePrice: response.average_price ?? 0,
   };
 };
