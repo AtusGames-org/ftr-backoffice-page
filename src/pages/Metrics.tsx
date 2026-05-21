@@ -41,7 +41,7 @@ function Metrics() {
 
             <section className="app-card p-6">
                 <h2 className="app-title text-2xl">Economy Metrics</h2>
-                <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <div className="mt-6 grid gap-4 md:grid-cols-4">
                     <StatCard
                         title="Gems Bought"
                         value={summary ? (summary.gemsBought !== null ? summary.gemsBought.toLocaleString() : '--') : '--'}
@@ -49,6 +49,14 @@ function Metrics() {
                     <StatCard
                         title="Gems Spent"
                         value={summary ? (summary.gemsSpent !== null ? summary.gemsSpent.toLocaleString() : '--') : '--'}
+                    />
+                    <StatCard
+                        title="Gems Revenue"
+                        value={summary ? (summary.gemsRevenue !== null ? `$${summary.gemsRevenue.toFixed(2)}` : '--') : '--'}
+                    />
+                    <StatCard
+                        title="Gems Flow"
+                        value={summary ? (summary.gemsFlow !== null ? summary.gemsFlow.toFixed(2) : '--') : '--'}
                     />
                     <StatCard
                         title="Cosmetics"
