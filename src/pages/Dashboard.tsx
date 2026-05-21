@@ -68,7 +68,7 @@ function Dashboard() {
                             ? `${summary.gemsBought.toLocaleString()} / ${summary.gemsSpent.toLocaleString()}`
                             : '--'
                     }
-                    caption="Bought vs spent"
+                    caption="Ratio bought/spent"
                 />
             </section>
 
