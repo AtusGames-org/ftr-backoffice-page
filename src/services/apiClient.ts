@@ -27,6 +27,13 @@ const buildUrl = (path: string) => {
   return `${backendBaseUrl.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
+const redirectToLogin = () => {
+  authStorage.clearSession();
+  if (typeof window !== 'undefined' && window.location.hash !== '#/login') {
+    window.location.hash = '#/login';
+  }
+};
+
 const parseResponse = async <T>(response: Response) => {
   if (response.status === 204) {
     return null as T;
@@ -96,6 +103,11 @@ export const apiRequest = async <T>(path: string, options: ApiRequestOptions = {
     if (refreshed) {
       return apiRequest<T>(path, options);
     }
+    redirectToLogin();
+  }
+
+  if (response.status === 403 && !options.skipAuth) {
+    redirectToLogin();
   }
 
   if (!response.ok) {

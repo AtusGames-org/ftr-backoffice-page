@@ -8,6 +8,11 @@ export interface AuthResponse {
     email: string;
 }
 
+export interface SessionStatusResponse {
+    user_id: string;
+    is_admin: boolean;
+}
+
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
     const response = await apiRequest<AuthResponse>('/auth/login', {
         method: 'POST',
@@ -21,3 +26,6 @@ export const login = async (email: string, password: string): Promise<AuthRespon
 export const logout = () => {
     authStorage.clearSession();
 };
+
+export const verifyAdminSession = async (): Promise<SessionStatusResponse> =>
+    apiRequest<SessionStatusResponse>('/auth/session');

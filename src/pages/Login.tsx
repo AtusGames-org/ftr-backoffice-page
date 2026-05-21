@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, TextField } from '@mui/material';
-import { login } from '../services/authService';
+import { login, verifyAdminSession } from '../services/authService';
+import { authStorage } from '../services/authStorage';
 import logo from '../assets/ftr_logo.jpeg';
 
 function Login() {
@@ -10,6 +11,31 @@ function Login() {
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        let mounted = true;
+
+        const bootstrap = async () => {
+            if (!authStorage.getAccessToken() && !authStorage.getRefreshToken()) {
+                return;
+            }
+
+            try {
+                const session = await verifyAdminSession();
+                if (mounted && session?.is_admin) {
+                    navigate('/', { replace: true });
+                }
+            } catch {
+                // ignore and stay on login
+            }
+        };
+
+        bootstrap();
+
+        return () => {
+            mounted = false;
+        };
+    }, [navigate]);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
