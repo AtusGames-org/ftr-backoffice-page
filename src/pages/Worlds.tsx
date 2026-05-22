@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
     Button,
+    CircularProgress,
     Dialog,
     DialogContent,
     DialogTitle,
@@ -49,6 +50,14 @@ function Worlds() {
     const [selectedWorldCounts, setSelectedWorldCounts] = useState<PlayerCounts | null>(null);
     const cosmeticsPageSize = 12;
     const [startJobDialog, setStartJobDialog] = useState<{ open: boolean; worldId: string; zoneId: number } | null>(null);
+    const [stopJobDialog, setStopJobDialog] = useState<{ open: boolean; worldId: string; zoneId: number } | null>(null);
+    const [pollingDialog, setPollingDialog] = useState<{
+        open: boolean;
+        worldId: string;
+        zoneId: number;
+        action: 'start' | 'stop' | null;
+        message?: string;
+    }>({ open: false, worldId: '', zoneId: 0, action: null });
     const [isTestMode, setIsTestMode] = useState(false);
     const [worldPage, setWorldPage] = useState(0);
     const worldPageSize = 10;
@@ -76,7 +85,12 @@ function Worlds() {
 
         const zonesWithCounts = await Promise.all(
             zones.map(async (zone) => {
-                const address = zone.isOnline ? await getZoneAddress(worldId, zone.id).catch(() => undefined) : undefined;
+                let address: string | undefined = undefined;
+                try {
+                    address = await getZoneAddress(worldId, zone.id).catch(() => undefined);
+                } catch (e) {
+                    // ignore failures to fetch address
+                }
                 return {
                     ...zone,
                     address,
@@ -92,8 +106,7 @@ function Worlds() {
 
     const handleToggleZone = async (worldId: string, zoneId: number, isOnline: boolean) => {
         if (isOnline) {
-            await stopZoneJob(worldId, zoneId);
-            await handleSelectWorld(worldId);
+            setStopJobDialog({ open: true, worldId, zoneId });
         } else {
             setStartJobDialog({ open: true, worldId, zoneId });
             setIsTestMode(false);
@@ -104,12 +117,62 @@ function Worlds() {
         if (!startJobDialog) return;
         try {
             await startZoneJob(startJobDialog.worldId, startJobDialog.zoneId, isTestMode);
+            // show polling dialog until address appears
+            setPollingDialog({ open: true, worldId: startJobDialog.worldId, zoneId: startJobDialog.zoneId, action: 'start', message: 'Starting job. Waiting for zone to report its address...' });
             setStartJobDialog(null);
-            await handleSelectWorld(startJobDialog.worldId);
         } catch (err) {
             console.error('Failed to start job', err);
+            setStartJobDialog(null);
         }
     };
+
+    const handleConfirmStop = async () => {
+        if (!stopJobDialog) return;
+        try {
+            await stopZoneJob(stopJobDialog.worldId, stopJobDialog.zoneId);
+            setPollingDialog({ open: true, worldId: stopJobDialog.worldId, zoneId: stopJobDialog.zoneId, action: 'stop', message: 'Stopping job. Waiting for zone address to be removed...' });
+            setStopJobDialog(null);
+        } catch (err) {
+            console.error('Failed to stop job', err);
+            setStopJobDialog(null);
+        }
+    };
+
+    useEffect(() => {
+        if (!pollingDialog.open || !pollingDialog.action) return;
+        let cancelled = false;
+        const iv = setInterval(async () => {
+            if (cancelled) return;
+            try {
+                const addr = await getZoneAddress(pollingDialog.worldId, pollingDialog.zoneId).catch(() => undefined);
+                if (pollingDialog.action === 'start') {
+                    if (addr) {
+                        // done starting
+                        setPollingDialog((d) => ({ ...d, message: `Zone is reachable at ${addr}`, open: false, action: null }));
+                        await handleSelectWorld(pollingDialog.worldId);
+                        clearInterval(iv);
+                    }
+                } else if (pollingDialog.action === 'stop') {
+                    if (!addr) {
+                        // done stopping
+                        setPollingDialog((d) => ({ ...d, message: 'Zone address removed', open: false, action: null }));
+                        await handleSelectWorld(pollingDialog.worldId);
+                        clearInterval(iv);
+                    }
+                }
+            } catch (e) {
+                if (pollingDialog.action === 'stop') {
+                    setPollingDialog((d) => ({ ...d, message: 'Zone address removed', open: false, action: null }));
+                    await handleSelectWorld(pollingDialog.worldId);
+                    clearInterval(iv);
+                }
+            }
+        }, 2000);
+        return () => {
+            cancelled = true;
+            clearInterval(iv);
+        };
+    }, [pollingDialog]);
 
     const handleOpenCosmetics = async (worldId: string, page = 0) => {
         if (!worldId) {
@@ -306,7 +369,7 @@ function Worlds() {
                 <DialogTitle>Start Zone Job</DialogTitle>
                 <DialogContent>
                     <div className="space-y-4 py-4">
-                        <p className="text-sm">Zone {startJobDialog?.zoneId} - World {selectedWorld?.name}</p>
+                        <p className="text-sm">Are you sure you want to start job for Zone {startJobDialog?.zoneId} - World {selectedWorld?.name}?</p>
                         <label className="flex items-center gap-2">
                             <input
                                 type="checkbox"
@@ -323,7 +386,39 @@ function Worlds() {
                         Cancel
                     </Button>
                     <Button onClick={handleStartJob} variant="contained" color="primary">
-                        Start Job
+                        Yes, start job
+                    </Button>
+                </div>
+            </Dialog>
+
+            <Dialog open={stopJobDialog?.open ?? false} onClose={() => setStopJobDialog(null)}>
+                <DialogTitle>Stop Zone Job</DialogTitle>
+                <DialogContent>
+                    <div className="space-y-4 py-4">
+                        <p className="text-sm">Are you sure you want to stop job for Zone {stopJobDialog?.zoneId} - World {selectedWorld?.name}?</p>
+                    </div>
+                </DialogContent>
+                <div className="flex justify-end gap-2 p-4">
+                    <Button onClick={() => setStopJobDialog(null)} variant="outlined">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmStop} variant="contained" color="secondary">
+                        Yes, stop job
+                    </Button>
+                </div>
+            </Dialog>
+
+            <Dialog open={pollingDialog.open} onClose={() => setPollingDialog({ open: false, worldId: '', zoneId: 0, action: null })}> 
+                <DialogTitle>{pollingDialog.action === 'start' ? 'Starting Zone' : 'Stopping Zone'}</DialogTitle>
+                <DialogContent>
+                    <div className="space-y-4 py-4 flex items-center gap-3">
+                        <CircularProgress size={24} />
+                        <p className="text-sm">{pollingDialog.message}</p>
+                    </div>
+                </DialogContent>
+                <div className="flex justify-end gap-2 p-4">
+                    <Button onClick={() => setPollingDialog({ open: false, worldId: '', zoneId: 0, action: null })} variant="outlined">
+                        Close
                     </Button>
                 </div>
             </Dialog>

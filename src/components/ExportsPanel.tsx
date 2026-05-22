@@ -403,14 +403,29 @@ function ExportsPanel() {
                                 </button>
                             </div>
 
-                            <button
-                                type="button"
-                                disabled={busyKey === `${selectedApp}:${activeDraft.os}:upload` || !activeDraft.version.trim() || !activeDraft.file}
-                                onClick={() => handleUpload(selectedApp)}
-                                className="cursor-pointer w-full rounded-xl bg-[linear-gradient(135deg,rgba(245,180,74,0.9),rgba(245,180,74,0.55))] px-4 py-3 text-sm font-semibold text-[#140f08] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                Upload release
-                            </button>
+                            <div>
+                                <button
+                                    type="button"
+                                    disabled={busyKey === `${selectedApp}:${activeDraft.os}:upload` || !activeDraft.version.trim() || !activeDraft.file}
+                                    onClick={() => handleUpload(selectedApp)}
+                                    className="cursor-pointer w-full rounded-xl bg-[linear-gradient(135deg,rgba(245,180,74,0.9),rgba(245,180,74,0.55))] px-4 py-3 text-sm font-semibold text-[#140f08] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {busyKey === `${selectedApp}:${activeDraft.os}:upload` ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.15" />
+                                                <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                                            </svg>
+                                            Uploading...
+                                        </span>
+                                    ) : (
+                                        'Upload release'
+                                    )}
+                                </button>
+                                {busyKey === `${selectedApp}:${activeDraft.os}:upload` && (
+                                    <p className="mt-2 text-[11px] text-[rgba(184,176,214,0.8)]">Uploading - this can take up to a few minutes. Please do not close the tab.</p>
+                                )}
+                            </div>
                         </div>
                     </section>
 

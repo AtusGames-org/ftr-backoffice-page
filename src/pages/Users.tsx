@@ -47,6 +47,7 @@ function Users() {
     const [cosmeticsPage, setCosmeticsPage] = useState(0);
     const [previewItem, setPreviewItem] = useState<CosmeticPreviewItem | null>(null);
     const [previewOpen, setPreviewOpen] = useState(false);
+    const [grantDialog, setGrantDialog] = useState<{ open: boolean; userId: string | null }>({ open: false, userId: null });
     const cosmeticsPageSize = 12;
     const usersPageSize = 20;
 
@@ -89,12 +90,18 @@ function Users() {
     };
 
     const handleGrantAdmin = async (userId: string) => {
-        await grantAdmin(userId);
+        setGrantDialog({ open: true, userId });
+    };
+
+    const confirmGrantAdmin = async () => {
+        if (!grantDialog.userId) return;
+        await grantAdmin(grantDialog.userId);
         await loadUsers(filter, usersPage);
-        if (selectedUser?.id === userId) {
-            const details = await getUserDetails(userId);
+        if (selectedUser?.id === grantDialog.userId) {
+            const details = await getUserDetails(grantDialog.userId);
             setSelectedUser(details);
         }
+        setGrantDialog({ open: false, userId: null });
     };
 
     const handleOpenGemsDialog = (user: User) => {
@@ -309,6 +316,21 @@ function Users() {
                     </Button>
                     <Button variant="contained" color="primary" onClick={handleSaveGems}>
                         Save
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={grantDialog.open} onClose={() => setGrantDialog({ open: false, userId: null })} maxWidth="xs" fullWidth>
+                <DialogTitle>Grant Admin</DialogTitle>
+                <DialogContent className="space-y-4">
+                    <p className="text-sm text-[rgba(184,176,214,0.8)]">Are you sure you want to grant admin privileges to this user?</p>
+                </DialogContent>
+                <DialogActions>
+                    <Button variant="text" onClick={() => setGrantDialog({ open: false, userId: null })}>
+                        Cancel
+                    </Button>
+                    <Button variant="contained" color="secondary" onClick={confirmGrantAdmin}>
+                        Confirm
                     </Button>
                 </DialogActions>
             </Dialog>
