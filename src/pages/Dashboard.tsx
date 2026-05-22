@@ -65,10 +65,10 @@ function Dashboard() {
                     title="Gems Flow"
                     value={
                         summary?.gemsBought && summary?.gemsSpent
-                            ? `${summary.gemsBought.toLocaleString()} / ${summary.gemsSpent.toLocaleString()}`
+                            ? `${summary.gemsSpent.toLocaleString()} / ${summary.gemsBought.toLocaleString()}`
                             : '--'
                     }
-                    caption="Ratio bought/spent"
+                    caption="Ratio spent/bought"
                 />
             </section>
 
