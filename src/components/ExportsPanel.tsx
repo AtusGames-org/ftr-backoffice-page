@@ -23,12 +23,12 @@ const osOptions: { label: string; value: ExportOs }[] = [
 
 const pageSize = 6;
 
-type UploadDrafts = Record<ExportApp, { version: string; os: ExportOs; file: File | null }>;
+type UploadDrafts = Record<ExportApp, { version: string; os: ExportOs; file: File | null; releaseNote: string }>;
 type PaginationState = Record<ExportApp, Record<ExportOs, number>>;
 
 const createInitialDrafts = (): UploadDrafts => ({
-    ftr_world_editor: { version: '', os: 'linux', file: null },
-    ftr_game: { version: '', os: 'linux', file: null },
+    ftr_world_editor: { version: '', os: 'linux', file: null, releaseNote: '' },
+    ftr_game: { version: '', os: 'linux', file: null, releaseNote: '' },
 });
 
 const createInitialPagination = (): PaginationState => ({
@@ -166,11 +166,12 @@ function ExportsPanel() {
                 version: draft.version.trim(),
                 os: draft.os,
                 file: draft.file,
+                releaseNote: draft.releaseNote.trim() || undefined,
             });
             setStatusMessage(`Uploaded ${appName} ${draft.version.trim()} (${draft.os})`);
             setDrafts((current) => ({
                 ...current,
-                [appName]: { version: '', os: current[appName].os, file: null },
+                [appName]: { version: '', os: current[appName].os, file: null, releaseNote: '' },
             }));
             await loadVersions();
         } catch (error) {
@@ -354,6 +355,22 @@ function ExportsPanel() {
                             </div>
 
                             <div className="grid gap-2">
+                                <label className="text-[11px] uppercase tracking-[0.2em] text-[#6ae4ff]">Release notes</label>
+                                <textarea
+                                    rows={3}
+                                    value={activeDraft.releaseNote}
+                                    onChange={(event) =>
+                                        setDrafts((current) => ({
+                                            ...current,
+                                            [selectedApp]: { ...current[selectedApp], releaseNote: event.target.value },
+                                        }))
+                                    }
+                                    placeholder="Highlight new features or fixes"
+                                    className="resize-none rounded-xl border border-[#2a2640] bg-[#0f0d17] px-4 py-3 text-sm text-[#f8f5ff] outline-none placeholder:text-[#6d6790] focus:border-[rgba(106,228,255,0.45)]"
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
                                 <label className="text-[11px] uppercase tracking-[0.2em] text-[#6ae4ff]">Zip file</label>
                                 <input
                                     ref={(element) => {
@@ -471,6 +488,9 @@ function ExportsPanel() {
                                                             <div>
                                                                 <p className="text-base font-semibold text-[#f8f5ff]">{entry.version}</p>
                                                                 <p className="mt-1 text-[11px] text-[rgba(184,176,214,0.8)]">{new Date(entry.created_at).toLocaleString()}</p>
+                                                                <p className="mt-2 text-[11px] text-[rgba(184,176,214,0.9)]">
+                                                                    {entry.release_note || 'No release note provided.'}
+                                                                </p>
                                                                 {entry.is_latest && <p className="mt-2 text-[11px] font-semibold text-emerald-300">Latest</p>}
                                                             </div>
                                                             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
