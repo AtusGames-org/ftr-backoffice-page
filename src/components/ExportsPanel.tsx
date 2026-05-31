@@ -46,6 +46,7 @@ function ExportsPanel() {
     const [drafts, setDrafts] = useState<UploadDrafts>(createInitialDrafts);
     const [pagination, setPagination] = useState<PaginationState>(createInitialPagination);
     const [dragActive, setDragActive] = useState(false);
+    const [activeReleaseNote, setActiveReleaseNote] = useState<{ title: string; note: string } | null>(null);
     const fileInputRefs = useRef<Record<ExportApp, HTMLInputElement | null>>({
         ftr_world_editor: null,
         ftr_game: null,
@@ -263,6 +264,13 @@ function ExportsPanel() {
                 </div>
             </div>
         );
+    };
+
+    const getReleaseNotePreview = (note: string) => {
+        if (note.length <= 180) {
+            return note;
+        }
+        return `${note.slice(0, 180).trimEnd()}…`;
     };
 
     return (
@@ -488,9 +496,33 @@ function ExportsPanel() {
                                                             <div>
                                                                 <p className="text-base font-semibold text-[#f8f5ff]">{entry.version}</p>
                                                                 <p className="mt-1 text-[11px] text-[rgba(184,176,214,0.8)]">{new Date(entry.created_at).toLocaleString()}</p>
-                                                                <p className="mt-2 text-[11px] text-[rgba(184,176,214,0.9)]">
-                                                                    {entry.release_note || 'No release note provided.'}
-                                                                </p>
+                                                                {(() => {
+                                                                    const note = entry.release_note?.trim() || 'No release note provided.';
+                                                                    const isLongNote = note.length > 180 || note.includes('\n');
+                                                                    const preview = getReleaseNotePreview(note);
+
+                                                                    return (
+                                                                        <div className="mt-2 space-y-1">
+                                                                            <p className="text-[11px] text-[rgba(184,176,214,0.9)] whitespace-pre-line">
+                                                                                {preview}
+                                                                            </p>
+                                                                            {isLongNote && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() =>
+                                                                                        setActiveReleaseNote({
+                                                                                            title: `${entry.version} (${entry.os})`,
+                                                                                            note,
+                                                                                        })
+                                                                                    }
+                                                                                    className="cursor-pointer text-[11px] font-semibold text-[#6ae4ff] transition hover:text-[#f8f5ff]"
+                                                                                >
+                                                                                    View full release note
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                })()}
                                                                 {entry.is_latest && <p className="mt-2 text-[11px] font-semibold text-emerald-300">Latest</p>}
                                                             </div>
                                                             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
@@ -532,6 +564,28 @@ function ExportsPanel() {
                             );
                         })}
                     </section>
+                </div>
+            )}
+            {activeReleaseNote && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-10">
+                    <div className="w-full max-w-2xl rounded-2xl border border-[#2a2640] bg-[#0f0d17] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-[0.28em] text-[#6ae4ff]">Release Note</p>
+                                <h4 className="mt-2 text-lg font-semibold text-[#f8f5ff]">{activeReleaseNote.title}</h4>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setActiveReleaseNote(null)}
+                                className="cursor-pointer rounded-full border border-[#2a2640] px-3 py-1 text-[11px] font-semibold text-[#f8f5ff] transition hover:bg-[rgba(106,228,255,0.12)]"
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <div className="mt-4 max-h-[60vh] overflow-y-auto rounded-xl border border-[#2a2640] bg-[#120f1d] px-4 py-3 text-sm text-[#c9c1ea] whitespace-pre-line">
+                            {activeReleaseNote.note}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
