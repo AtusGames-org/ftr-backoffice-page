@@ -66,7 +66,7 @@ function Metrics() {
                     <StatCard
                         title="Cosmetics"
                         value={summary ? `${summary.userCreatedCosmetics.toLocaleString()} items` : '--'}
-                        caption={summary ? `Avg price ${summary.avgCosmeticPrice} gems` : undefined}
+                        caption={summary && summary.avgCosmeticPrice !== null ? `Avg price ${summary.avgCosmeticPrice.toFixed(2)} gems` : undefined}
                     />
                 </div>
             </section>

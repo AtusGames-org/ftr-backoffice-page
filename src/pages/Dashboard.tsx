@@ -109,7 +109,7 @@ function Dashboard() {
           />
           <StatCard
             title="Average Price"
-            value={summary ? `${summary.avgCosmeticPrice} gems` : "--"}
+            value={summary && summary.avgCosmeticPrice !== null ? `${summary.avgCosmeticPrice.toFixed(2)} gems` : "--"}
             caption="Weighted market rate"
           />
         </div>
