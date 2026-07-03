@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, TextField } from '@mui/material';
 import { login, verifyAdminSession } from '../services/authService';
 import { authStorage } from '../services/authStorage';
-import logo from '../assets/ftr_logo.jpeg';
+import logo from '../assets/portal-logo.png';
 
 function Login() {
     const navigate = useNavigate();
@@ -55,7 +55,7 @@ function Login() {
         <div className="flex min-h-screen items-center justify-center bg-sigil px-6">
             <div className="app-card w-full max-w-md p-8">
                 <div className="mb-8 text-center">
-                    <img src={logo} alt="Feed the Realm" className="mx-auto h-14 w-14 rounded-full border border-[rgba(245,180,74,0.5)]" />
+                    <img src={logo} alt="Feed the Realm" className="mx-auto h-14 w-14" />
                     <h1 className="app-title mt-4 text-3xl">Admin Gate</h1>
                     <p className="text-sm text-[rgba(184,176,214,0.8)]">Enter the realm administration console.</p>
                 </div>

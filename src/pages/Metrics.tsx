@@ -21,10 +21,15 @@ function Metrics() {
                 <h2 className="app-title text-2xl">Player Metrics</h2>
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
                     <StatCard title="Total Players" value={summary ? summary.totalPlayers.toLocaleString() : '--'} />
-                    <StatCard title="Active Players" value={summary ? summary.activePlayers.toLocaleString() : '--'} />
+                    <StatCard
+                        title="Active Players"
+                        value={summary ? summary.activePlayers.toLocaleString() : '--'}
+                        caption={`Max ${summary ? summary.maxActivePlayers.toLocaleString() : '--'}`}
+                    />
                     <StatCard
                         title="Avg Player Time"
                         value={summary ? (summary.avgPlayerTime !== null ? `${summary.avgPlayerTime} min` : '--') : '--'}
+                        caption={`Max ${summary && summary.maxAvgPlayerTime !== null ? `${summary.maxAvgPlayerTime} min` : '--'}`}
                     />
                 </div>
             </section>
@@ -61,7 +66,7 @@ function Metrics() {
                     <StatCard
                         title="Cosmetics"
                         value={summary ? `${summary.userCreatedCosmetics.toLocaleString()} items` : '--'}
-                        caption={summary ? `Avg price ${summary.avgCosmeticPrice} gems` : undefined}
+                        caption={summary && summary.avgCosmeticPrice !== null ? `Avg price ${summary.avgCosmeticPrice.toFixed(2)} gems` : undefined}
                     />
                 </div>
             </section>

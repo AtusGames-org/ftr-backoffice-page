@@ -10,6 +10,7 @@ export interface ExportVersion {
   os: ExportOs;
   path: string;
   is_latest: boolean;
+  release_note: string;
   created_at: string;
   updated_at: string;
 }
@@ -19,6 +20,7 @@ export interface ExportUploadInput {
   version: string;
   os: ExportOs;
   file: File;
+  releaseNote?: string;
 }
 
 export interface ExportSetLatestInput {
@@ -63,6 +65,9 @@ export const uploadExportZip = async (input: ExportUploadInput): Promise<ExportV
   formData.set('version', input.version);
   formData.set('os', input.os);
   formData.set('file', input.file);
+  if (input.releaseNote !== undefined) {
+    formData.set('release_note', input.releaseNote);
+  }
 
   return apiRequest<ExportVersion>('/exports/zip', {
     method: 'PUT',

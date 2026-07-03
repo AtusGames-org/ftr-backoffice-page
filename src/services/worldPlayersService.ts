@@ -3,6 +3,8 @@ import { apiRequest } from './apiClient';
 export interface PlayerCounts {
     active_players: number;
     average_player_time: number;
+    max_active_players: number;
+    max_average_player_time: number;
 }
 
 export const getAllWorldPlayerCounts = async (): Promise<PlayerCounts> =>

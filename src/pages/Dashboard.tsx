@@ -50,7 +50,7 @@ function Dashboard() {
           <StatCard
             title="Active Players"
             value={summary ? summary.activePlayers.toLocaleString() : "--"}
-            caption="Currently in world"
+            caption={`Currently in world · Max ${summary ? summary.maxActivePlayers.toLocaleString() : "--"}`}
           />
           <StatCard
             title="Avg Player Time"
@@ -61,7 +61,7 @@ function Dashboard() {
                   : "--"
                 : "--"
             }
-            caption="Across all worlds"
+            caption={`Across all worlds · Max ${summary && summary.maxAvgPlayerTime !== null ? `${summary.maxAvgPlayerTime} min` : "--"}`}
           />
         </div>
       </section>
@@ -109,7 +109,7 @@ function Dashboard() {
           />
           <StatCard
             title="Average Price"
-            value={summary ? `${summary.avgCosmeticPrice} gems` : "--"}
+            value={summary && summary.avgCosmeticPrice !== null ? `${summary.avgCosmeticPrice.toFixed(2)} gems` : "--"}
             caption="Weighted market rate"
           />
         </div>

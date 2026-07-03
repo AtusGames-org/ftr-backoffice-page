@@ -294,8 +294,14 @@ function Worlds() {
                             <p className="mt-2 text-xs text-[rgba(184,176,214,0.8)]">
                                 Active players: {selectedWorldCounts ? selectedWorldCounts.active_players : '--'}
                             </p>
+                            <p className="text-xs text-[rgba(184,176,214,0.6)]">
+                                Max active players: {selectedWorldCounts ? selectedWorldCounts.max_active_players : '--'}
+                            </p>
                             <p className="text-xs text-[rgba(184,176,214,0.8)]">
                                 Avg player time: {selectedWorldCounts ? `${selectedWorldCounts.average_player_time} min` : '--'}
+                            </p>
+                            <p className="text-xs text-[rgba(184,176,214,0.6)]">
+                                Max avg time: {selectedWorldCounts ? `${selectedWorldCounts.max_average_player_time} min` : '--'}
                             </p>
                         </div>
                         <div>

@@ -11,12 +11,14 @@ import { getCosmeticsEconomySummary } from "./assetsService";
 export interface MetricsSummary {
   totalPlayers: number;
   activePlayers: number;
+  maxActivePlayers: number;
   totalWorlds: number;
   worldsOnline: number;
   totalZones: number;
   onlineZones: number;
   avgZonesPerWorld: number;
   avgPlayerTime: number | null;
+  maxAvgPlayerTime: number | null;
   gemsBought: number | null;
   gemsSpent: number | null;
   gemsRevenue: number | null;
@@ -66,6 +68,8 @@ export const getMetricsSummary = async (): Promise<MetricsSummary> => {
     worlds.length > 0 ? Number((totalZones / worlds.length).toFixed(1)) : 0;
   const activePlayers = playerCounts?.active_players ?? 0;
   const avgPlayerTime = playerCounts ? playerCounts.average_player_time : null;
+  const maxActivePlayers = playerCounts?.max_active_players ?? 0;
+  const maxAvgPlayerTime = playerCounts ? playerCounts.max_average_player_time : null;
   const totalCreatorBalance = creatorBalances.reduce(
     (sum, balance) => sum + balance.balance,
     0,
@@ -78,12 +82,14 @@ export const getMetricsSummary = async (): Promise<MetricsSummary> => {
   return {
     totalPlayers,
     activePlayers,
+    maxActivePlayers,
     totalWorlds: worlds.length,
     worldsOnline,
     totalZones,
     onlineZones,
     avgZonesPerWorld,
     avgPlayerTime,
+    maxAvgPlayerTime,
     gemsBought: gemMetrics ? gemMetrics.gems_bought : null,
     gemsSpent: gemMetrics ? gemMetrics.gems_spent : null,
     gemsRevenue: gemMetrics ? gemMetrics.gems_revenue : null,
