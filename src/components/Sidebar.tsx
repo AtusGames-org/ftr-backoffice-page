@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { GiCastle, GiCrown, GiDragonHead, GiRank3, GiScrollUnfurled } from 'react-icons/gi';
+import { GiCastle, GiCrown, GiDragonHead, GiFlatPlatform, GiRank3, GiScrollUnfurled } from 'react-icons/gi';
 import logo from '../assets/ftr_logo.jpeg';
 import { getMetricsSummary } from '../services/metricsService';
 
@@ -10,6 +10,7 @@ const navItems = [
     { to: '/worlds', label: 'Worlds', icon: GiCastle },
     { to: '/metrics', label: 'Metrics', icon: GiRank3 },
     { to: '/exports', label: 'Exports', icon: GiScrollUnfurled },
+    { to: '/subscriptions', label: 'Subscriptions', icon: GiFlatPlatform },
 ];
 
 function Sidebar() {
