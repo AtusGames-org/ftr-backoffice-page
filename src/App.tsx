@@ -7,6 +7,7 @@ import Exports from './pages/Exports';
 import Users from './pages/Users';
 import Worlds from './pages/Worlds';
 import Metrics from './pages/Metrics';
+import Subscriptions from './pages/Subscriptions';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/worlds" element={<Worlds />} />
           <Route path="/metrics" element={<Metrics />} />
           <Route path="/exports" element={<Exports />} />
+          <Route path='/subscriptions' element={<Subscriptions />} />
           </Route>
         </Route>
       </Routes>
